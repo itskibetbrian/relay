@@ -1,0 +1,18 @@
+{
+  "extends": "./node_modules/expo/tsconfig.base.json",
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "bundler"
+  },
+  "include": [
+    "App.tsx",
+    "index.js",
+    "src/**/*",
+    "*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "android",
+    ".expo"
+  ]
+}

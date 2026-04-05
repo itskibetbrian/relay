@@ -1,0 +1,406 @@
+// src/services/database.ts
+//
+// Database Service — SQLite via expo-sqlite
+// Handles all persistence: snippets, categories, user prefs.
+// All methods return typed results; errors bubble to callers.
+
+import * as SQLite from 'expo-sqlite';
+import { Snippet, SnippetInsert, SnippetUpdate, Category } from '../types';
+import { DEFAULT_CATEGORIES } from '../constants';
+
+const DB_NAME = 'clipmanager.db';
+const DB_VERSION = 1;
+
+class DatabaseService {
+  private db: SQLite.SQLiteDatabase | null = null;
+
+  // ─── Initialisation ──────────────────────────────────────────────────────
+
+  async init(): Promise<void> {
+    this.db = await SQLite.openDatabaseAsync(DB_NAME);
+    await this.runMigrations();
+  }
+
+  private getDb(): SQLite.SQLiteDatabase {
+    if (!this.db) throw new Error('Database not initialised. Call init() first.');
+    return this.db;
+  }
+
+  private async runMigrations(): Promise<void> {
+    const db = this.getDb();
+
+    await db.execAsync(`PRAGMA journal_mode = WAL;`);
+
+    // Categories table
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id          TEXT PRIMARY KEY NOT NULL,
+        name        TEXT NOT NULL,
+        color       TEXT NOT NULL DEFAULT '#6366F1',
+        icon        TEXT NOT NULL DEFAULT 'tag',
+        created_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+      );
+    `);
+
+    // Snippets table
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS snippets (
+        id          TEXT PRIMARY KEY NOT NULL,
+        title       TEXT NOT NULL,
+        content     TEXT NOT NULL,
+        category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
+        is_favorite INTEGER NOT NULL DEFAULT 0,
+        use_count   INTEGER NOT NULL DEFAULT 0,
+        created_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+        updated_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+      );
+    `);
+
+    // User preferences (key-value store)
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS preferences (
+        key   TEXT PRIMARY KEY NOT NULL,
+        value TEXT NOT NULL
+      );
+    `);
+
+    // Auth config (single row for app-wide auth settings)
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS auth_config (
+        id                TEXT PRIMARY KEY NOT NULL DEFAULT 'main',
+        pin_hash          TEXT,
+        biometric_enabled INTEGER NOT NULL DEFAULT 0,
+        failed_attempts   INTEGER NOT NULL DEFAULT 0,
+        locked_until      INTEGER,
+        created_at        INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+      );
+    `);
+
+    // Seed default categories if the table is empty
+    const row = await db.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) as count FROM categories`
+    );
+    if (row?.count === 0) {
+      await this.seedDefaultCategories();
+    }
+  }
+
+  private async seedDefaultCategories(): Promise<void> {
+    const db = this.getDb();
+    for (const cat of DEFAULT_CATEGORIES) {
+      await db.runAsync(
+        `INSERT OR IGNORE INTO categories (id, name, color, icon) VALUES (?, ?, ?, ?)`,
+        [cat.id, cat.name, cat.color, cat.icon]
+      );
+    }
+  }
+
+  // ─── Snippet CRUD ─────────────────────────────────────────────────────────
+
+  async getAllSnippets(): Promise<Snippet[]> {
+    const db = this.getDb();
+    const rows = await db.getAllAsync<any>(`
+      SELECT
+        s.id, s.title, s.content, s.category_id as categoryId,
+        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.created_at as createdAt, s.updated_at as updatedAt,
+        c.name as categoryName, c.color as categoryColor
+      FROM snippets s
+      LEFT JOIN categories c ON s.category_id = c.id
+      ORDER BY s.updated_at DESC
+    `);
+    return rows.map(row => this.mapSnippet(row));
+  }
+
+  async getSnippetById(id: string): Promise<Snippet | null> {
+    const db = this.getDb();
+    const row = await db.getFirstAsync<any>(`
+      SELECT
+        s.id, s.title, s.content, s.category_id as categoryId,
+        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.created_at as createdAt, s.updated_at as updatedAt,
+        c.name as categoryName, c.color as categoryColor
+      FROM snippets s
+      LEFT JOIN categories c ON s.category_id = c.id
+      WHERE s.id = ?
+    `, [id]);
+    return row ? this.mapSnippet(row) : null;
+  }
+
+  async getSnippetsByCategory(categoryId: string): Promise<Snippet[]> {
+    const db = this.getDb();
+    const rows = await db.getAllAsync<any>(`
+      SELECT
+        s.id, s.title, s.content, s.category_id as categoryId,
+        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.created_at as createdAt, s.updated_at as updatedAt,
+        c.name as categoryName, c.color as categoryColor
+      FROM snippets s
+      LEFT JOIN categories c ON s.category_id = c.id
+      WHERE s.category_id = ?
+      ORDER BY s.updated_at DESC
+    `, [categoryId]);
+    return rows.map(this.mapSnippet);
+  }
+
+  async getFavoriteSnippets(): Promise<Snippet[]> {
+    const db = this.getDb();
+    const rows = await db.getAllAsync<any>(`
+      SELECT
+        s.id, s.title, s.content, s.category_id as categoryId,
+        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.created_at as createdAt, s.updated_at as updatedAt,
+        c.name as categoryName, c.color as categoryColor
+      FROM snippets s
+      LEFT JOIN categories c ON s.category_id = c.id
+      WHERE s.is_favorite = 1
+      ORDER BY s.use_count DESC
+    `);
+    return rows.map(this.mapSnippet);
+  }
+
+  async searchSnippets(query: string): Promise<Snippet[]> {
+    const db = this.getDb();
+    const pattern = `%${query}%`;
+    const rows = await db.getAllAsync<any>(`
+      SELECT
+        s.id, s.title, s.content, s.category_id as categoryId,
+        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.created_at as createdAt, s.updated_at as updatedAt,
+        c.name as categoryName, c.color as categoryColor
+      FROM snippets s
+      LEFT JOIN categories c ON s.category_id = c.id
+      WHERE s.title LIKE ? OR s.content LIKE ?
+      ORDER BY s.use_count DESC, s.updated_at DESC
+    `, [pattern, pattern]);
+    return rows.map(this.mapSnippet);
+  }
+
+  async createSnippet(data: SnippetInsert): Promise<Snippet> {
+    const db = this.getDb();
+    const id = this.generateId();
+    const now = Date.now();
+
+    await db.runAsync(
+      `INSERT INTO snippets (id, title, content, category_id, is_favorite, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, data.title, data.content, data.categoryId ?? null, data.isFavorite ? 1 : 0, now, now]
+    );
+
+    const row = await db.getFirstAsync<any>(
+      `SELECT s.*, c.name as categoryName, c.color as categoryColor
+       FROM snippets s LEFT JOIN categories c ON s.category_id = c.id
+       WHERE s.id = ?`,
+      [id]
+    );
+    return this.mapSnippet(row);
+  }
+
+  async updateSnippet(data: SnippetUpdate): Promise<Snippet> {
+    const db = this.getDb();
+    const now = Date.now();
+
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (data.title !== undefined)      { fields.push('title = ?');       values.push(data.title); }
+    if (data.content !== undefined)    { fields.push('content = ?');     values.push(data.content); }
+    if (data.categoryId !== undefined) { fields.push('category_id = ?'); values.push(data.categoryId); }
+    if (data.isFavorite !== undefined) { fields.push('is_favorite = ?'); values.push(data.isFavorite ? 1 : 0); }
+
+    fields.push('updated_at = ?');
+    values.push(now);
+    values.push(data.id);
+
+    await db.runAsync(
+      `UPDATE snippets SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    const row = await db.getFirstAsync<any>(
+      `SELECT s.*, c.name as categoryName, c.color as categoryColor
+       FROM snippets s LEFT JOIN categories c ON s.category_id = c.id
+       WHERE s.id = ?`,
+      [data.id]
+    );
+    return this.mapSnippet(row);
+  }
+
+  async deleteSnippet(id: string): Promise<void> {
+    const db = this.getDb();
+    await db.runAsync(`DELETE FROM snippets WHERE id = ?`, [id]);
+  }
+
+  async incrementUseCount(id: string): Promise<void> {
+    const db = this.getDb();
+    await db.runAsync(
+      `UPDATE snippets SET use_count = use_count + 1, updated_at = ? WHERE id = ?`,
+      [Date.now(), id]
+    );
+  }
+
+  async toggleFavorite(id: string): Promise<boolean> {
+    const db = this.getDb();
+    const row = await db.getFirstAsync<{ is_favorite: number }>(
+      `SELECT is_favorite FROM snippets WHERE id = ?`, [id]
+    );
+    const newVal = row?.is_favorite === 1 ? 0 : 1;
+    await db.runAsync(
+      `UPDATE snippets SET is_favorite = ?, updated_at = ? WHERE id = ?`,
+      [newVal, Date.now(), id]
+    );
+    return newVal === 1;
+  }
+
+  async getSnippetCount(): Promise<number> {
+    const db = this.getDb();
+    const row = await db.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM snippets`);
+    return row?.count ?? 0;
+  }
+
+  async getPreference(key: string, fallback?: string): Promise<string | undefined> {
+    const db = this.getDb();
+    const row = await db.getFirstAsync<{ value: string }>(
+      `SELECT value FROM preferences WHERE key = ?`,
+      [key]
+    );
+    return row?.value ?? fallback;
+  }
+
+  async setPreference(key: string, value: string): Promise<void> {
+    const db = this.getDb();
+    await db.runAsync(
+      `INSERT INTO preferences (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [key, value]
+    );
+  }
+
+  // ─── Category CRUD ────────────────────────────────────────────────────────
+
+  async getAllCategories(): Promise<Category[]> {
+    const db = this.getDb();
+    const rows = await db.getAllAsync<any>(`
+      SELECT id, name, color, icon, created_at as createdAt
+      FROM categories
+      ORDER BY created_at ASC
+    `);
+    return rows.map(row => this.mapCategory(row));
+  }
+
+  async createCategory(name: string, color: string, icon: string): Promise<Category> {
+    const db = this.getDb();
+    const id = this.generateId();
+    const now = Date.now();
+    await db.runAsync(
+      `INSERT INTO categories (id, name, color, icon, created_at) VALUES (?, ?, ?, ?, ?)`,
+      [id, name, color, icon, now]
+    );
+    return { id, name, color, icon, createdAt: now };
+  }
+
+  async updateCategory(id: string, name: string, color: string, icon: string): Promise<void> {
+    const db = this.getDb();
+    await db.runAsync(
+      `UPDATE categories SET name = ?, color = ?, icon = ? WHERE id = ?`,
+      [name, color, icon, id]
+    );
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    const db = this.getDb();
+    // ON DELETE SET NULL handles the snippets FK automatically
+    await db.runAsync(`DELETE FROM categories WHERE id = ?`, [id]);
+  }
+
+  // ─── Auth Config ────────────────────────────────────────────────────────
+
+  async getAuthConfig(): Promise<{
+    id: string;
+    pinHash: string | null;
+    biometricEnabled: boolean;
+    failedAttempts: number;
+    lockedUntil: number | null;
+    createdAt: number;
+  } | null> {
+    const db = this.getDb();
+    const row = await db.getFirstAsync<any>(`
+      SELECT id, pin_hash as pinHash, biometric_enabled as biometricEnabled,
+             failed_attempts as failedAttempts, locked_until as lockedUntil, created_at as createdAt
+      FROM auth_config WHERE id = 'main'
+    `);
+    return row
+      ? {
+          ...row,
+          biometricEnabled: row.biometricEnabled === 1,
+        }
+      : null;
+  }
+
+  async setAuthConfig(config: { pinHash?: string; biometricEnabled?: boolean; failedAttempts?: number; lockedUntil?: number | null }): Promise<void> {
+    const db = this.getDb();
+    const current = await this.getAuthConfig();
+
+    const pinHash = config.pinHash !== undefined ? config.pinHash : current?.pinHash ?? null;
+    const biometricEnabled = config.biometricEnabled !== undefined
+      ? config.biometricEnabled
+      : Boolean(current?.biometricEnabled);
+    const failedAttempts = config.failedAttempts !== undefined
+      ? config.failedAttempts
+      : current?.failedAttempts ?? 0;
+    const lockedUntil = config.lockedUntil !== undefined
+      ? config.lockedUntil
+      : current?.lockedUntil ?? null;
+
+    await db.runAsync(
+      `INSERT INTO auth_config (id, pin_hash, biometric_enabled, failed_attempts, locked_until)
+       VALUES ('main', ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         pin_hash = excluded.pin_hash,
+         biometric_enabled = excluded.biometric_enabled,
+         failed_attempts = excluded.failed_attempts,
+         locked_until = excluded.locked_until`,
+      [pinHash, biometricEnabled ? 1 : 0, failedAttempts, lockedUntil]
+    );
+  }
+
+  async deleteAuthConfig(): Promise<void> {
+    const db = this.getDb();
+    await db.runAsync(`DELETE FROM auth_config WHERE id = 'main'`);
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  private mapSnippet(row: any): Snippet {
+    return {
+      id: row.id,
+      title: row.title,
+      content: row.content,
+      categoryId: row.categoryId ?? row.category_id ?? null,
+      categoryName: row.categoryName ?? undefined,
+      categoryColor: row.categoryColor ?? undefined,
+      isFavorite: row.isFavorite === 1 || row.is_favorite === 1,
+      useCount: row.useCount ?? row.use_count ?? 0,
+      createdAt: row.createdAt ?? row.created_at ?? 0,
+      updatedAt: row.updatedAt ?? row.updated_at ?? 0,
+    };
+  }
+
+  private mapCategory(row: any): Category {
+    return {
+      id: row.id,
+      name: row.name,
+      color: row.color,
+      icon: row.icon,
+      createdAt: row.createdAt ?? row.created_at ?? 0,
+    };
+  }
+
+  private generateId(): string {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+}
+
+// Singleton export
+export const db = new DatabaseService();
+export default db;
