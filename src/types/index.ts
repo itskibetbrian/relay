@@ -38,6 +38,7 @@ export type RootStackParamList = {
   AddSnippet: { snippetId?: string };
   ManageCategories: undefined;
   Paywall: undefined;
+  SetupPIN: undefined;
   SnippetDetail: { snippetId: string };
 };
 

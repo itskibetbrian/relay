@@ -68,7 +68,7 @@ export const MainTabNavigator: React.FC = () => (
       headerShadowVisible: false,
       headerTitleStyle: {
         ...textFont(),
-        fontWeight: '800',
+        fontWeight: '900',
         color: '#1E1B2E',
         fontSize: 20,
       },
@@ -118,12 +118,12 @@ const styles = StyleSheet.create({
   tabLabel: {
     ...textFont(),
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#9CA3AF',
   },
   tabLabelActive: {
     color: '#7C3AED',
-    fontWeight: '800',
+    fontWeight: '900',
   },
 });
 

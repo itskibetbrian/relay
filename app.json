@@ -5,7 +5,9 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#0F0F13"
     },
@@ -20,11 +22,16 @@
       }
     },
     "android": {
-      "package": "com.qoppy.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F0F13"
+      },
+      "package": "com.yourname.qoppy",
       "versionCode": 1,
       "permissions": []
     },
     "web": {
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [],
     "extra": {}

@@ -34,6 +34,7 @@ interface AuthContextValue extends AuthState {
   unlockWithBiometric: () => Promise<boolean>;
   setupPin: (pin: string, confirmPin: string, enableBiometric?: boolean) => Promise<boolean>;
   skipPinSetup: () => Promise<void>;
+  disableProtection: () => Promise<void>;
   lock: () => void;
 }
 
@@ -274,8 +275,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isBiometricEnabled: enableBiometric && prev.isBiometricAvailable,
       }));
       return true;
-    } catch (error) {
-      console.error('PIN setup failed:', error);
+    } catch {
+      console.error('PIN setup failed.');
       return false;
     }
   }, []);
@@ -296,14 +297,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   }, []);
 
+  const disableProtection = useCallback(async (): Promise<void> => {
+    await authService.deleteAuthConfig();
+    authService.clearSessionToken();
+    setState(prev => ({
+      ...prev,
+      isAuthenticated: true,
+      isProtectionEnabled: false,
+      isBiometricEnabled: false,
+      needsSetup: false,
+      failedAttempts: 0,
+      isLocked: false,
+      lockoutTimeRemaining: 0,
+      cooldownTimeRemaining: 0,
+    }));
+  }, []);
+
   const value = useMemo<AuthContextValue>(() => ({
     ...state,
     unlockWithPin,
     unlockWithBiometric,
     setupPin,
     skipPinSetup,
+    disableProtection,
     lock,
-  }), [lock, setupPin, skipPinSetup, state, unlockWithBiometric, unlockWithPin]);
+  }), [disableProtection, lock, setupPin, skipPinSetup, state, unlockWithBiometric, unlockWithPin]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -13,6 +13,7 @@ import OnboardingScreen from '../screens/OnboardingScreen';
 import AddSnippetScreen from '../screens/AddSnippetScreen';
 import PaywallScreen from '../screens/PaywallScreen';
 import ManageCategoriesScreen from '../screens/ManageCategoriesScreen';
+import { SetupPINScreen } from '../screens/SetupPINScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { AuthGate } from './AuthGate';
 import { AuthProvider } from '../hooks/useAuth';
@@ -121,6 +122,11 @@ export const RootNavigator: React.FC = () => {
               name="Paywall"
               component={ProtectedPaywallScreen}
               options={{ presentation: 'modal', headerShown: false }}
+            />
+            <Stack.Screen
+              name="SetupPIN"
+              component={SetupPINScreen}
+              options={{ title: 'App Lock', presentation: 'modal' }}
             />
             <Stack.Screen
               name="ManageCategories"

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../hooks/useAuth';
 import {
   Crown,
   Tag,
@@ -24,6 +25,9 @@ import {
   FileText,
   Mail,
   Wallet,
+  Lock,
+  Fingerprint,
+  ShieldOff,
 } from 'lucide-react-native';
 import { db } from '../services/database';
 import { COLORS } from '../constants';
@@ -69,6 +73,12 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
+  const {
+    isProtectionEnabled,
+    isBiometricAvailable,
+    isBiometricEnabled,
+    disableProtection,
+  } = useAuth();
   const [snippetCount, setSnippetCount] = useState(0);
   const [hapticEnabled, setHapticEnabled] = useState(true);
 
@@ -109,6 +119,24 @@ export const SettingsScreen: React.FC = () => {
     Alert.alert('Reset', 'Restart the app to see the onboarding again.');
   };
 
+  const handleDisableProtection = () => {
+    Alert.alert(
+      'Disable app lock?',
+      'This will remove your current PIN and biometric protection from Qoppy.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Disable',
+          style: 'destructive',
+          onPress: async () => {
+            await disableProtection();
+            Alert.alert('App lock disabled', 'PIN and biometric protection have been removed.');
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <TouchableOpacity
@@ -144,6 +172,40 @@ export const SettingsScreen: React.FC = () => {
             />
           }
         />
+      </Section>
+
+      <Section title="App Lock">
+        <Row
+          icon={Lock}
+          iconColor="#7C3AED"
+          label={isProtectionEnabled ? 'Update PIN or biometric' : 'Set up PIN or biometric'}
+          sublabel={
+            isProtectionEnabled
+              ? isBiometricEnabled
+                ? 'PIN lock is enabled with biometric unlock.'
+                : 'PIN lock is enabled.'
+              : 'Protect Qoppy with a PIN and optional biometric unlock.'
+          }
+          onPress={() => navigation.navigate('SetupPIN')}
+        />
+        {isBiometricAvailable && (
+          <Row
+            icon={Fingerprint}
+            iconColor={COLORS.success}
+            label="Biometric availability"
+            sublabel={isBiometricEnabled ? 'Biometric unlock is currently active.' : 'Biometric unlock can be enabled during setup.'}
+          />
+        )}
+        {isProtectionEnabled && (
+          <Row
+            icon={ShieldOff}
+            iconColor={COLORS.danger}
+            label="Disable app lock"
+            sublabel="Remove PIN and biometric protection from this device."
+            danger
+            onPress={handleDisableProtection}
+          />
+        )}
       </Section>
 
       <Section title="Premium">
