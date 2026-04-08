@@ -8,8 +8,8 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Search, X } from 'lucide-react-native';
-import { COLORS } from '../../constants';
 import { textFont } from '../../constants/typography';
+import { useTheme } from '../../hooks/useTheme';
 
 interface SearchBarProps {
   value: string;
@@ -22,15 +22,17 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onChange,
   placeholder = 'Search snippets…',
 }) => {
+  const { theme } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <Search size={17} color={COLORS.textMuted} strokeWidth={2} style={styles.icon} />
+    <View style={[styles.container, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <Search size={17} color={theme.textMuted} strokeWidth={2} style={styles.icon} />
       <TextInput
-        style={styles.input}
+        style={[styles.input, { color: theme.text }]}
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={theme.textSecondary}
         returnKeyType="search"
         autoCorrect={false}
         autoCapitalize="none"
@@ -38,7 +40,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       />
       {value.length > 0 && (
         <TouchableOpacity onPress={() => onChange('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <X size={16} color="#9CA3AF" />
+          <X size={16} color={theme.textSecondary} />
         </TouchableOpacity>
       )}
     </View>

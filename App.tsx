@@ -9,6 +9,7 @@ import Toast from 'react-native-toast-message';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { textFont } from './src/constants/typography';
+import { ThemeProvider, useTheme } from './src/hooks/useTheme';
 
 const TextWithDefaults = Text as typeof Text & { defaultProps?: { style?: unknown } };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: { style?: unknown } };
@@ -19,13 +20,23 @@ TextWithDefaults.defaultProps.style = [TextWithDefaults.defaultProps.style, text
 TextInputWithDefaults.defaultProps = TextInputWithDefaults.defaultProps ?? {};
 TextInputWithDefaults.defaultProps.style = [TextInputWithDefaults.defaultProps.style, textFont()];
 
-export default function App() {
+const AppShell: React.FC = () => {
+  const { theme } = useTheme();
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.background }}>
       <SafeAreaProvider>
         <RootNavigator />
         <Toast />
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+};
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppShell />
+    </ThemeProvider>
   );
 }

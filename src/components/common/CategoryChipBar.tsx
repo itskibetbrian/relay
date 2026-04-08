@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Category } from '../../types';
-import { COLORS } from '../../constants';
+import { useTheme } from '../../hooks/useTheme';
 
 interface CategoryChipBarProps {
   categories: Category[];
@@ -22,6 +22,8 @@ export const CategoryChipBar: React.FC<CategoryChipBarProps> = ({
   activeId,
   onSelect,
 }) => {
+  const { theme } = useTheme();
+
   return (
     <ScrollView
       horizontal
@@ -31,9 +33,10 @@ export const CategoryChipBar: React.FC<CategoryChipBarProps> = ({
       {/* "All" chip */}
       <Chip
         label="All"
-        color="#7C3AED"
+        color={theme.primary}
         isActive={activeId === null}
         onPress={() => onSelect(null)}
+        theme={theme}
       />
       {categories.map(cat => (
         <Chip
@@ -42,6 +45,7 @@ export const CategoryChipBar: React.FC<CategoryChipBarProps> = ({
           color={cat.color}
           isActive={activeId === cat.id}
           onPress={() => onSelect(cat.id)}
+          theme={theme}
         />
       ))}
     </ScrollView>
@@ -53,15 +57,16 @@ interface ChipProps {
   color: string;
   isActive: boolean;
   onPress: () => void;
+  theme: ReturnType<typeof useTheme>['theme'];
 }
 
-const Chip: React.FC<ChipProps> = ({ label, color, isActive, onPress }) => (
+const Chip: React.FC<ChipProps> = ({ label, color, isActive, onPress, theme }) => (
   <TouchableOpacity
     style={[
       styles.chip,
       isActive
-        ? { backgroundColor: '#7C3AED', borderColor: '#7C3AED' }
-        : { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' },
+        ? { backgroundColor: theme.primary, borderColor: theme.primary }
+        : { backgroundColor: theme.surfaceAlt, borderColor: theme.border },
     ]}
     onPress={onPress}
     activeOpacity={0.7}

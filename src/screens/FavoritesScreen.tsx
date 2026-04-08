@@ -8,10 +8,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Crown } from 'lucide-react-native';
 
 import { SnippetCard } from '../components/cards/SnippetCard';
 import { db } from '../services/database';
@@ -19,6 +17,7 @@ import { useSnippets } from '../hooks/useSnippets';
 import { Snippet, RootStackParamList } from '../types';
 import { COLORS } from '../constants';
 import { textFont } from '../constants/typography';
+import { useTheme } from '../hooks/useTheme';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -27,6 +26,7 @@ const NUM_COLUMNS = SCREEN_WIDTH > 420 ? 3 : 2;
 
 export const FavoritesScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
+  const { theme } = useTheme();
   const [favorites, setFavorites] = useState<Snippet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { copiedId, copySnippet, toggleFavorite: toggleFav, deleteSnippet } = useSnippets();
@@ -34,11 +34,6 @@ export const FavoritesScreen: React.FC = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: 'Qoppy',
-      headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('Paywall')} style={styles.headerBtn} activeOpacity={0.75}>
-          <Crown size={20} color="#7C3AED" />
-        </TouchableOpacity>
-      ),
     });
   }, [navigation]);
 
@@ -63,7 +58,7 @@ export const FavoritesScreen: React.FC = () => {
 
   const renderItem = useCallback(
     ({ item }: { item: Snippet }) => (
-      <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)} layout={Layout.springify()}>
+      <View>
         <SnippetCard
           snippet={item}
           isCopied={copiedId === item.id}
@@ -75,21 +70,21 @@ export const FavoritesScreen: React.FC = () => {
             setFavorites(prev => prev.filter(s => s.id !== id));
           }}
         />
-      </Animated.View>
+      </View>
     ),
     [copiedId, copySnippet, deleteSnippet, handleToggleFav, navigation]
   );
 
   if (isLoading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator color={COLORS.primary} size="large" />
+      <View style={[styles.center, { backgroundColor: theme.background }]}>
+        <ActivityIndicator color={theme.primary} size="large" />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
         data={favorites}
         keyExtractor={item => item.id}
@@ -98,15 +93,15 @@ export const FavoritesScreen: React.FC = () => {
         columnWrapperStyle={NUM_COLUMNS > 1 ? styles.row : undefined}
         contentContainerStyle={styles.list}
         ListHeaderComponent={
-          <Text style={styles.count}>
+          <Text style={[styles.count, { color: theme.textSecondary }]}>
             {favorites.length} favorite{favorites.length !== 1 ? 's' : ''}
           </Text>
         }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>{"<3"}</Text>
-            <Text style={styles.emptyTitle}>No favorites yet</Text>
-            <Text style={styles.emptySubtitle}>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>No favorites yet</Text>
+            <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
               Tap the heart on any snippet to save it here.
             </Text>
           </View>
@@ -117,11 +112,8 @@ export const FavoritesScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background },
-  headerBtn: {
-    padding: 8,
-  },
+  container: { flex: 1, backgroundColor: '#EDE9F6' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#EDE9F6' },
   list: { paddingBottom: 112 },
   row: { justifyContent: 'flex-start', paddingHorizontal: 8 },
   count: {

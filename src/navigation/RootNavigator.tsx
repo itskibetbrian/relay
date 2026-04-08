@@ -18,29 +18,31 @@ import MainTabNavigator from './MainTabNavigator';
 import { AuthGate } from './AuthGate';
 import { AuthProvider } from '../hooks/useAuth';
 import { SnippetsProvider } from '../hooks/useSnippets';
+import { useTheme } from '../hooks/useTheme';
 
 // Ignore specific warnings if necessary
 LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const NAV_THEME = {
-  ...DarkTheme,
-  dark: false,
-  colors: {
-    ...DarkTheme.colors,
-    background: '#EDE9F6',
-    card: '#FFFFFF',
-    text: '#1E1B2E',
-    border: '#DDD6FE',
-    primary: '#7C3AED',
-    notification: '#7C3AED',
-  },
-};
-
 export const RootNavigator: React.FC = () => {
+  const { theme, mode } = useTheme();
   const [isReady, setIsReady] = useState(false);
   const [initialRoute, setInitialRoute] = useState<'Onboarding' | 'Main'>('Onboarding');
+
+  const navTheme = {
+    ...DarkTheme,
+    dark: mode === 'dark',
+    colors: {
+      ...DarkTheme.colors,
+      background: theme.background,
+      card: theme.header,
+      text: theme.text,
+      border: theme.border,
+      primary: theme.primary,
+      notification: theme.primary,
+    },
+  };
 
   useEffect(() => {
     (async () => {
@@ -58,8 +60,8 @@ export const RootNavigator: React.FC = () => {
 
   if (!isReady) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#EDE9F6', alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color="#7C3AED" size="large" />
+      <View style={{ flex: 1, backgroundColor: theme.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={theme.primary} size="large" />
       </View>
     );
   }
@@ -91,15 +93,15 @@ export const RootNavigator: React.FC = () => {
   return (
     <AuthProvider>
       <SnippetsProvider>
-        <NavigationContainer theme={NAV_THEME}>
+        <NavigationContainer theme={navTheme}>
           <Stack.Navigator
             initialRouteName={initialRoute}
             screenOptions={{
-              headerStyle: { backgroundColor: '#FFFFFF' },
-              headerTintColor: '#1E1B2E',
+              headerStyle: { backgroundColor: theme.header },
+              headerTintColor: theme.text,
               headerShadowVisible: false,
-              headerTitleStyle: { fontWeight: '700', fontSize: 17, color: '#1E1B2E' },
-              contentStyle: { backgroundColor: '#EDE9F6' },
+              headerTitleStyle: { fontWeight: '700', fontSize: 17, color: theme.text },
+              contentStyle: { backgroundColor: theme.background },
               animation: 'slide_from_right',
             }}
           >

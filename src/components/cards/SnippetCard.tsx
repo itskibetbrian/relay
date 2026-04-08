@@ -25,6 +25,7 @@ import { Check, Copy, Heart, MoreVertical } from 'lucide-react-native';
 import { Snippet } from '../../types';
 import { COLORS, ANIMATION_DURATION } from '../../constants';
 import { textFont } from '../../constants/typography';
+import { useTheme } from '../../hooks/useTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // 2 columns on phones ≤ 375px wide, 3 columns on larger screens
@@ -52,6 +53,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const { theme, mode } = useTheme();
   const scale = useSharedValue(1);
   const glowOpacity = useSharedValue(0);
   const copyProgress = useSharedValue(0);
@@ -70,7 +72,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
     backgroundColor: interpolateColor(
       copyProgress.value,
       [0, 1],
-      ['#FFFFFF', '#ECFDF5']
+      [theme.surface, mode === 'dark' ? '#183127' : '#ECFDF5']
     ),
   }));
 
@@ -114,7 +116,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
       <Animated.View style={[styles.glow, glowStyle]} />
 
       <AnimatedTouchable
-        style={[styles.card, cardBgStyle]}
+        style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }, cardBgStyle]}
         onPress={handleCopy}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -127,7 +129,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
           <View
             style={[
               styles.categoryBadge,
-              { backgroundColor: '#F5F3FF' },
+              { backgroundColor: theme.surfaceAlt },
             ]}
           >
             <View
@@ -139,7 +141,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
             <Text
               style={[
                 styles.categoryText,
-                { color: '#7C3AED' },
+                { color: theme.primary },
               ]}
               numberOfLines={1}
             >
@@ -149,12 +151,12 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
         )}
 
         {/* Title */}
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
           {snippet.title}
         </Text>
 
         {/* Content preview */}
-        <Text style={styles.content} numberOfLines={3}>
+        <Text style={[styles.content, { color: theme.textSecondary }]} numberOfLines={3}>
           {contentPreview}
         </Text>
 
@@ -176,8 +178,8 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
               </>
             ) : (
               <>
-                <Copy size={11} color={COLORS.textMuted} strokeWidth={2} />
-                <Text style={styles.copyLabel}>Tap to copy</Text>
+                <Copy size={11} color={theme.textMuted} strokeWidth={2} />
+                <Text style={[styles.copyLabel, { color: theme.textMuted }]}>Tap to copy</Text>
               </>
             )}
           </View>
@@ -189,7 +191,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
           >
             <Heart
               size={16}
-              color={snippet.isFavorite ? '#EF4444' : COLORS.textMuted}
+              color={snippet.isFavorite ? '#EF4444' : theme.textMuted}
               fill={snippet.isFavorite ? '#EF4444' : 'transparent'}
               strokeWidth={2}
             />

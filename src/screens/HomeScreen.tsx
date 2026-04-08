@@ -12,7 +12,7 @@ import {
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Plus, Crown } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 
 import { SnippetCard } from '../components/cards/SnippetCard';
 import { CategoryChipBar } from '../components/common/CategoryChipBar';
@@ -22,6 +22,7 @@ import { useCategories } from '../hooks/useCategories';
 import { COLORS } from '../constants';
 import { textFont } from '../constants/typography';
 import { RootStackParamList, Snippet } from '../types';
+import { useTheme } from '../hooks/useTheme';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -30,6 +31,7 @@ const NUM_COLUMNS = SCREEN_WIDTH > 420 ? 3 : 2;
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
+  const { theme, mode } = useTheme();
   const {
     snippets,
     isLoading,
@@ -48,11 +50,6 @@ export const HomeScreen: React.FC = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: 'Qoppy',
-      headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('Paywall')} style={styles.headerBtn} activeOpacity={0.75}>
-          <Crown size={20} color="#7C3AED" />
-        </TouchableOpacity>
-      ),
     });
   }, [navigation]);
 
@@ -82,17 +79,17 @@ export const HomeScreen: React.FC = () => {
 
   const EmptyState = () => (
     <View style={styles.empty}>
-      <Text style={styles.emptyIcon}>[]</Text>
-      <Text style={styles.emptyTitle}>{searchQuery ? 'No results found' : 'No snippets yet'}</Text>
-      <Text style={styles.emptySubtitle}>
+      <Text style={[styles.emptyIcon, { color: theme.primary }]}>[]</Text>
+      <Text style={[styles.emptyTitle, { color: theme.text }]}>{searchQuery ? 'No results found' : 'No snippets yet'}</Text>
+      <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
         {searchQuery ? 'Try a different search term.' : 'Tap + to save your first snippet.'}
       </Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#EDE9F6" />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
 
       <FlatList
         data={snippets}
@@ -114,7 +111,7 @@ export const HomeScreen: React.FC = () => {
             />
 
             {!isLoading && (
-              <Text style={styles.count}>
+              <Text style={[styles.count, { color: theme.textSecondary }]}>
                 {snippets.length} snippet{snippets.length !== 1 ? 's' : ''}
               </Text>
             )}
@@ -122,7 +119,7 @@ export const HomeScreen: React.FC = () => {
         }
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator style={styles.loader} color={COLORS.primary} size="large" />
+            <ActivityIndicator style={styles.loader} color={theme.primary} size="large" />
           ) : (
             <EmptyState />
           )
@@ -143,10 +140,6 @@ export const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EDE9F6',
-  },
-  headerBtn: {
-    padding: 8,
   },
   list: {
     paddingBottom: 118,

@@ -32,6 +32,7 @@ import { db } from '../services/database';
 import { COLORS } from '../constants';
 import { textFont } from '../constants/typography';
 import { RootStackParamList } from '../types';
+import { useTheme } from '../hooks/useTheme';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -45,33 +46,42 @@ interface RowProps {
   danger?: boolean;
 }
 
-const Row: React.FC<RowProps> = ({ icon: Icon, iconColor = COLORS.primary, label, sublabel, onPress, right, danger }) => (
-  <TouchableOpacity
-    style={styles.row}
-    onPress={onPress}
-    disabled={!onPress}
-    activeOpacity={onPress ? 0.7 : 1}
-  >
-    <View style={[styles.rowIcon, { backgroundColor: iconColor + '18' }]}>
-      <Icon size={18} color={danger ? COLORS.danger : iconColor} strokeWidth={2} />
-    </View>
-    <View style={styles.rowText}>
-      <Text style={[styles.rowLabel, danger && { color: COLORS.danger }]}>{label}</Text>
-      {sublabel && <Text style={styles.rowSublabel}>{sublabel}</Text>}
-    </View>
-    {right ?? (onPress && <ChevronRight size={16} color={COLORS.textMuted} />)}
-  </TouchableOpacity>
-);
+const Row: React.FC<RowProps> = ({ icon: Icon, iconColor = COLORS.primary, label, sublabel, onPress, right, danger }) => {
+  const { theme } = useTheme();
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionCard}>{children}</View>
-  </View>
-);
+  return (
+    <TouchableOpacity
+      style={[styles.row, { borderBottomColor: theme.border }]}
+      onPress={onPress}
+      disabled={!onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+    >
+      <View style={[styles.rowIcon, { backgroundColor: iconColor + '18' }]}>
+        <Icon size={18} color={danger ? theme.danger : iconColor} strokeWidth={2} />
+      </View>
+      <View style={styles.rowText}>
+        <Text style={[styles.rowLabel, { color: danger ? theme.danger : theme.text }]}>{label}</Text>
+        {sublabel && <Text style={[styles.rowSublabel, { color: theme.textSecondary }]}>{sublabel}</Text>}
+      </View>
+      {right ?? (onPress && <ChevronRight size={16} color={theme.textMuted} />)}
+    </TouchableOpacity>
+  );
+};
+
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => {
+  const { theme } = useTheme();
+
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>{title}</Text>
+      <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>{children}</View>
+    </View>
+  );
+};
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
+  const { theme } = useTheme();
   const {
     isProtectionEnabled,
     isBiometricAvailable,
@@ -138,18 +148,18 @@ export const SettingsScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
       <TouchableOpacity
-        style={styles.premiumBanner}
+        style={[styles.premiumBanner, { backgroundColor: theme.surfaceAlt, borderColor: theme.primary }]}
         onPress={() => navigation.navigate('Paywall')}
         activeOpacity={0.85}
       >
-        <Crown size={22} color="#7C3AED" fill="#7C3AED20" />
+        <Crown size={22} color={theme.primary} fill={`${theme.primary}20`} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
-          <Text style={styles.premiumSub}>Free includes up to 10 snippets. Premium unlocks unlimited snippets and payment boilerplate for card and crypto upgrades.</Text>
+          <Text style={[styles.premiumTitle, { color: theme.primary }]}>Upgrade to Premium</Text>
+          <Text style={[styles.premiumSub, { color: theme.primary }]}>Free includes up to 10 snippets. Premium unlocks unlimited snippets and payment boilerplate for card and crypto upgrades.</Text>
         </View>
-        <ChevronRight size={18} color="#7C3AED" />
+        <ChevronRight size={18} color={theme.primary} />
       </TouchableOpacity>
 
       <Section title="Usage">
@@ -167,7 +177,7 @@ export const SettingsScreen: React.FC = () => {
             <Switch
               value={hapticEnabled}
               onValueChange={handleToggleHaptic}
-              trackColor={{ true: COLORS.primary, false: COLORS.border }}
+              trackColor={{ true: theme.primary, false: theme.border }}
               thumbColor={COLORS.white}
             />
           }

@@ -11,6 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Crown, Check, X, Shield, CreditCard, Bitcoin } from 'lucide-react-native';
 import { COLORS } from '../constants';
 import { textFont } from '../constants/typography';
+import { useTheme } from '../hooks/useTheme';
 
 const BENEFITS = [
   'Unlimited snippets instead of the free-tier cap of 10',
@@ -57,6 +58,7 @@ const PLANS: Record<PlanKey, PlanConfig> = {
 
 export const PaywallScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme } = useTheme();
   const [plan, setPlan] = useState<PlanKey>('yearly');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodKey>('stripe');
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -84,11 +86,11 @@ export const PaywallScreen: React.FC = () => {
   const active = PLANS[plan];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
       <View style={styles.hero}>
-        <Crown size={44} color="#7C3AED" fill="#7C3AED20" />
-        <Text style={styles.heroTitle}>Qoppy Premium</Text>
-        <Text style={styles.heroSubtitle}>Free includes up to 10 snippets. Premium unlocks unlimited snippets and future upgrade-ready features.</Text>
+        <Crown size={44} color={theme.primary} fill={`${theme.primary}20`} />
+        <Text style={[styles.heroTitle, { color: theme.text }]}>Qoppy Premium</Text>
+        <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>Free includes up to 10 snippets. Premium unlocks unlimited snippets and future upgrade-ready features.</Text>
       </View>
 
       <View style={styles.benefitsList}>
