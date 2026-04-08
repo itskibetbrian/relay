@@ -1,9 +1,4 @@
-// src/screens/HomeScreen.tsx
-//
-// Primary screen. Renders the snippet grid with search and category filtering.
-// All copy logic lives in useSnippets; this component is pure presentation.
-
-import React, { useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useLayoutEffect } from 'react';
 import {
   View,
   FlatList,
@@ -13,16 +8,11 @@ import {
   Dimensions,
   ActivityIndicator,
   StatusBar,
-  Platform,
 } from 'react-native';
-import Animated, {
-  FadeIn,
-  FadeOut,
-  Layout,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Plus, Settings, Crown } from 'lucide-react-native';
+import { Plus, Crown } from 'lucide-react-native';
 
 import { SnippetCard } from '../components/cards/SnippetCard';
 import { CategoryChipBar } from '../components/common/CategoryChipBar';
@@ -30,6 +20,7 @@ import { SearchBar } from '../components/common/SearchBar';
 import { useSnippets } from '../hooks/useSnippets';
 import { useCategories } from '../hooks/useCategories';
 import { COLORS } from '../constants';
+import { textFont } from '../constants/typography';
 import { RootStackParamList, Snippet } from '../types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -54,60 +45,28 @@ export const HomeScreen: React.FC = () => {
   } = useSnippets();
   const { categories } = useCategories();
 
-  // ── Navigation header buttons ─────────────────────────────────────────
-
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: '',
-      headerLeft: () => (
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>CB</Text>
-        </View>
-      ),
+      headerTitle: 'Qoppy',
       headerRight: () => (
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Paywall')}
-            style={styles.headerBtn}
-          >
-            <Crown size={20} color="#7C3AED" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ManageCategories')}
-            style={styles.headerBtn}
-          >
-            <Settings size={20} color="#9CA3AF" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => navigation.navigate('Paywall')} style={styles.headerBtn} activeOpacity={0.75}>
+          <Crown size={20} color="#7C3AED" />
+        </TouchableOpacity>
       ),
     });
   }, [navigation]);
 
-  // ── Handlers ─────────────────────────────────────────────────────────
+  const handleEdit = useCallback((snippet: Snippet) => {
+    navigation.navigate('AddSnippet', { snippetId: snippet.id });
+  }, [navigation]);
 
-  const handleEdit = useCallback(
-    (snippet: Snippet) => {
-      navigation.navigate('AddSnippet', { snippetId: snippet.id });
-    },
-    [navigation]
-  );
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      await deleteSnippet(id);
-    },
-    [deleteSnippet]
-  );
-
-  // ── Render helpers ────────────────────────────────────────────────────
+  const handleDelete = useCallback(async (id: string) => {
+    await deleteSnippet(id);
+  }, [deleteSnippet]);
 
   const renderItem = useCallback(
     ({ item }: { item: Snippet }) => (
-      <Animated.View
-        entering={FadeIn.duration(200)}
-        exiting={FadeOut.duration(150)}
-        layout={Layout.springify()}
-      >
+      <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)} layout={Layout.springify()}>
         <SnippetCard
           snippet={item}
           isCopied={copiedId === item.id}
@@ -121,23 +80,15 @@ export const HomeScreen: React.FC = () => {
     [copiedId, copySnippet, toggleFavorite, handleEdit, handleDelete]
   );
 
-  const keyExtractor = useCallback((item: Snippet) => item.id, []);
-
   const EmptyState = () => (
     <View style={styles.empty}>
-      <Text style={styles.emptyIcon}>📋</Text>
-      <Text style={styles.emptyTitle}>
-        {searchQuery ? 'No results found' : 'No snippets yet'}
-      </Text>
+      <Text style={styles.emptyIcon}>[]</Text>
+      <Text style={styles.emptyTitle}>{searchQuery ? 'No results found' : 'No snippets yet'}</Text>
       <Text style={styles.emptySubtitle}>
-        {searchQuery
-          ? 'Try a different search term'
-          : 'Tap + to save your first snippet'}
+        {searchQuery ? 'Try a different search term.' : 'Tap + to save your first snippet.'}
       </Text>
     </View>
   );
-
-  // ── Render ────────────────────────────────────────────────────────────
 
   return (
     <View style={styles.container}>
@@ -145,7 +96,7 @@ export const HomeScreen: React.FC = () => {
 
       <FlatList
         data={snippets}
-        keyExtractor={keyExtractor}
+        keyExtractor={item => item.id}
         renderItem={renderItem}
         numColumns={NUM_COLUMNS}
         columnWrapperStyle={NUM_COLUMNS > 1 ? styles.row : undefined}
@@ -154,17 +105,14 @@ export const HomeScreen: React.FC = () => {
         refreshing={isLoading && snippets.length > 0}
         ListHeaderComponent={
           <>
-            {/* Search bar */}
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search snippets..." />
 
-            {/* Category filter chips */}
             <CategoryChipBar
               categories={categories}
               activeId={activeCategory}
               onSelect={filterByCategory}
             />
 
-            {/* Results count */}
             {!isLoading && (
               <Text style={styles.count}>
                 {snippets.length} snippet{snippets.length !== 1 ? 's' : ''}
@@ -174,18 +122,13 @@ export const HomeScreen: React.FC = () => {
         }
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator
-              style={styles.loader}
-              color={COLORS.primary}
-              size="large"
-            />
+            <ActivityIndicator style={styles.loader} color={COLORS.primary} size="large" />
           ) : (
             <EmptyState />
           )
         }
       />
 
-      {/* FAB */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('AddSnippet', {})}
@@ -197,33 +140,10 @@ export const HomeScreen: React.FC = () => {
   );
 };
 
-// ── Styles ────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#EDE9F6',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#7C3AED',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: Platform.OS === 'android' ? 12 : 0,
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginRight: Platform.OS === 'android' ? 4 : 0,
   },
   headerBtn: {
     padding: 8,
@@ -236,11 +156,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   count: {
-    fontSize: 12,
+    ...textFont(),
+    fontSize: 13,
     color: '#6B7280',
     paddingHorizontal: 20,
     paddingBottom: 4,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   empty: {
     flex: 1,
@@ -250,21 +171,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyIcon: {
-    fontSize: 48,
+    ...textFont(true),
+    fontSize: 40,
     marginBottom: 16,
+    color: '#7C3AED',
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...textFont(),
+    fontSize: 22,
+    fontWeight: '800',
     color: '#1E1B2E',
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 14,
+    ...textFont(),
+    fontSize: 15,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 21,
+    lineHeight: 23,
   },
   loader: {
     marginTop: 80,

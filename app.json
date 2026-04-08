@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Clipsafe",
-    "slug": "clipsafe",
+    "name": "Qoppy",
+    "slug": "qoppy",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -12,7 +12,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.copyboard.app",
+      "bundleIdentifier": "com.qoppy.app",
       "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Not used.",
@@ -20,7 +20,7 @@
       }
     },
     "android": {
-      "package": "com.copyboard.app",
+      "package": "com.qoppy.app",
       "versionCode": 1,
       "permissions": []
     },

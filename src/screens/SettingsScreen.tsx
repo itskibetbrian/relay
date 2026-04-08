@@ -1,5 +1,3 @@
-// src/screens/SettingsScreen.tsx
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -14,11 +12,22 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
-  Crown, Tag, Trash2, ExternalLink,
-  Shield, Star, ChevronRight, Info, Zap
+  Crown,
+  Tag,
+  Trash2,
+  ExternalLink,
+  Shield,
+  Star,
+  ChevronRight,
+  Info,
+  Zap,
+  FileText,
+  Mail,
+  Wallet,
 } from 'lucide-react-native';
 import { db } from '../services/database';
 import { COLORS } from '../constants';
+import { textFont } from '../constants/typography';
 import { RootStackParamList } from '../types';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -84,7 +93,9 @@ export const SettingsScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             const all = await db.getAllSnippets();
-            for (const s of all) await db.deleteSnippet(s.id);
+            for (const snippet of all) {
+              await db.deleteSnippet(snippet.id);
+            }
             setSnippetCount(0);
             Alert.alert('Done', 'All snippets deleted.');
           },
@@ -100,7 +111,6 @@ export const SettingsScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Premium banner */}
       <TouchableOpacity
         style={styles.premiumBanner}
         onPress={() => navigation.navigate('Paywall')}
@@ -109,7 +119,7 @@ export const SettingsScreen: React.FC = () => {
         <Crown size={22} color="#7C3AED" fill="#7C3AED20" />
         <View style={{ flex: 1 }}>
           <Text style={styles.premiumTitle}>Upgrade to Premium</Text>
-          <Text style={styles.premiumSub}>Unlimited snippets · Cloud sync · No ads</Text>
+          <Text style={styles.premiumSub}>Free includes up to 10 snippets. Premium unlocks unlimited snippets and payment boilerplate for card and crypto upgrades.</Text>
         </View>
         <ChevronRight size={18} color="#7C3AED" />
       </TouchableOpacity>
@@ -136,28 +146,61 @@ export const SettingsScreen: React.FC = () => {
         />
       </Section>
 
+      <Section title="Premium">
+        <Row
+          icon={Wallet}
+          iconColor="#7C3AED"
+          label="Payment methods"
+          sublabel="Stripe card, USDT, and BTC boilerplate is ready on the premium screen."
+          onPress={() => navigation.navigate('Paywall')}
+        />
+      </Section>
+
       <Section title="Data">
         <Row icon={Trash2} label="Clear all snippets" danger onPress={handleClearAll} />
         <Row icon={Shield} iconColor={COLORS.textMuted} label="Reset onboarding" onPress={handleResetOnboarding} />
       </Section>
 
-      <Section title="About">
+      <Section title="Legal">
         <Row
-          icon={Star}
-          iconColor={COLORS.secondary}
-          label="Rate the app"
-          sublabel="Enjoying Clipsafe?"
-          onPress={() => Linking.openURL('https://apps.apple.com')}
+          icon={FileText}
+          iconColor={COLORS.textSecondary}
+          label="Terms & Conditions"
+          onPress={() => Linking.openURL('https://nogeybix.com/legal/terms')}
         />
         <Row
           icon={ExternalLink}
           iconColor={COLORS.textSecondary}
           label="Privacy Policy"
-          onPress={() => Linking.openURL('https://example.com/privacy')}
+          onPress={() => Linking.openURL('https://nogeybix.com/legal/privacy')}
         />
       </Section>
 
-      <Text style={styles.version}>Clipsafe v1.0.0</Text>
+      <Section title="About">
+        <Row
+          icon={Info}
+          iconColor={COLORS.secondary}
+          label="About Us"
+          sublabel="Nogeybix Labs is the team behind Qoppy."
+          onPress={() => Linking.openURL('https://nogeybix.com/about')}
+        />
+        <Row
+          icon={Mail}
+          iconColor={COLORS.primary}
+          label="Contact Us"
+          sublabel="support@qoppy.app"
+          onPress={() => Linking.openURL('mailto:support@qoppy.app')}
+        />
+        <Row
+          icon={Star}
+          iconColor={COLORS.secondary}
+          label="Rate the App"
+          sublabel="Enjoying Qoppy?"
+          onPress={() => Linking.openURL('https://apps.apple.com')}
+        />
+      </Section>
+
+      <Text style={styles.version}>Qoppy v1.0.0</Text>
     </ScrollView>
   );
 };
@@ -166,17 +209,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#EDE9F6' },
   content: { padding: 16, paddingBottom: 60 },
   premiumBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F5F3FF', borderRadius: 18, borderWidth: 1.5, borderColor: '#7C3AED', padding: 16, gap: 14, marginBottom: 24 },
-  premiumTitle: { fontSize: 15, fontWeight: '800', color: '#7C3AED' },
-  premiumSub: { fontSize: 12, color: '#7C3AED', marginTop: 2 },
+  premiumTitle: { ...textFont(), fontSize: 17, fontWeight: '800', color: '#7C3AED' },
+  premiumSub: { ...textFont(), fontSize: 14, color: '#7C3AED', marginTop: 2, lineHeight: 20 },
   section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, paddingLeft: 4 },
+  sectionTitle: { ...textFont(), fontSize: 13, fontWeight: '800', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, paddingLeft: 4 },
   sectionCard: { backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#DDD6FE', overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14, borderBottomWidth: 1, borderBottomColor: '#DDD6FE' },
   rowIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   rowText: { flex: 1 },
-  rowLabel: { fontSize: 15, fontWeight: '600', color: '#1E1B2E' },
-  rowSublabel: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  version: { textAlign: 'center', fontSize: 12, color: '#6B7280', marginTop: 8 },
+  rowLabel: { ...textFont(), fontSize: 16, fontWeight: '700', color: '#1E1B2E' },
+  rowSublabel: { ...textFont(), fontSize: 13, color: '#6B7280', marginTop: 2, lineHeight: 19 },
+  version: { ...textFont(), textAlign: 'center', fontSize: 13, color: '#6B7280', marginTop: 8 },
 });
 
 export default SettingsScreen;

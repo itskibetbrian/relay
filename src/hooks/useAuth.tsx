@@ -9,6 +9,7 @@ import React, {
 import { AppState, AppStateStatus } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { authService } from '../services/authService';
+import { validatePin, validatePinSetup } from '../services/authValidation';
 
 const AUTO_LOCK_TIMEOUT = 5 * 60 * 1000;
 const COOLDOWN_DURATION = 30 * 1000;
@@ -55,13 +56,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const initializeAuth = useCallback(async () => {
     try {
-      const [config, biometricAvailable, biometricEnabled] = await Promise.all([
+      const [config, biometricAvailable, biometricEnabled, hasPinConfigured] = await Promise.all([
         authService.getAuthConfig(),
         LocalAuthentication.hasHardwareAsync(),
         authService.getBiometricEnabled(),
+        authService.hasPinConfigured(),
       ]);
 
-      const isProtectionEnabled = Boolean(config?.pinHash);
+      const isProtectionEnabled = hasPinConfigured;
       const isLocked = config ? authService.isLocked(config.lockedUntil) : false;
       const lockoutTimeRemaining = config ? authService.getLockoutTimeRemaining(config.lockedUntil) : 0;
 
@@ -101,14 +103,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    if (
+      nextAppState === 'active' &&
+      lastBackgroundTime &&
+      Date.now() - lastBackgroundTime > AUTO_LOCK_TIMEOUT &&
+      authService.isAuthenticated()
+    ) {
+      lock();
+    }
+
     if (nextAppState === 'active') {
-      if (
-        lastBackgroundTime &&
-        Date.now() - lastBackgroundTime > AUTO_LOCK_TIMEOUT &&
-        authService.isAuthenticated()
-      ) {
-        lock();
-      }
       setLastBackgroundTime(null);
     }
   }, [lastBackgroundTime, lock]);
@@ -119,7 +123,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [handleAppStateChange]);
 
   useEffect(() => {
-    if (state.cooldownTimeRemaining <= 0) return;
+    if (state.cooldownTimeRemaining <= 0) {
+      return;
+    }
 
     const interval = setInterval(() => {
       setState(prev => ({
@@ -132,7 +138,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [state.cooldownTimeRemaining]);
 
   useEffect(() => {
-    if (state.lockoutTimeRemaining <= 0) return;
+    if (state.lockoutTimeRemaining <= 0) {
+      return;
+    }
 
     const interval = setInterval(() => {
       setState(prev => {
@@ -178,13 +186,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [state.failedAttempts]);
 
   const unlockWithPin = useCallback(async (pin: string): Promise<boolean> => {
-    if (state.isLocked || state.cooldownTimeRemaining > 0) return false;
+    if (state.isLocked || state.cooldownTimeRemaining > 0) {
+      return false;
+    }
+
+    const validation = validatePin(pin);
+    if (!validation.valid) {
+      return false;
+    }
 
     try {
       const config = await authService.getAuthConfig();
-      if (!config?.pinHash) return false;
+      if (!config) {
+        return false;
+      }
 
-      const isValid = await authService.verifyPin(pin, config.pinHash);
+      const isValid = await authService.verifyStoredPin(pin.trim());
       if (!isValid) {
         await handleFailedAttempt();
         return false;
@@ -209,7 +226,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [handleFailedAttempt, state.cooldownTimeRemaining, state.isLocked]);
 
   const unlockWithBiometric = useCallback(async (): Promise<boolean> => {
-    if (!state.isBiometricAvailable || !state.isBiometricEnabled || state.isLocked) return false;
+    if (!state.isBiometricAvailable || !state.isBiometricEnabled || state.isLocked) {
+      return false;
+    }
 
     try {
       const result = await LocalAuthentication.authenticateAsync({
@@ -217,7 +236,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fallbackLabel: 'Use PIN',
       });
 
-      if (!result.success) return false;
+      if (!result.success) {
+        return false;
+      }
 
       authService.setSessionToken(authService.generateSessionToken());
       setState(prev => ({ ...prev, isAuthenticated: true }));
@@ -233,10 +254,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     confirmPin: string,
     enableBiometric: boolean = false
   ): Promise<boolean> => {
-    if (pin !== confirmPin || pin.length < 4 || pin.length > 6) return false;
+    const validation = validatePinSetup(pin, confirmPin);
+    if (!validation.valid) {
+      return false;
+    }
 
     try {
-      await authService.setupAuth(pin, enableBiometric);
+      await authService.setupAuth(pin.trim(), enableBiometric);
       authService.setSessionToken(authService.generateSessionToken());
       setState(prev => ({
         ...prev,
@@ -289,5 +313,6 @@ export const useAuth = (): AuthContextValue => {
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 };

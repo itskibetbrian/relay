@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../hooks/useAuth';
+import { validatePin } from '../services/authValidation';
 import { styles } from '../styles';
 
 export const LockScreen: React.FC = () => {
@@ -40,13 +41,14 @@ export const LockScreen: React.FC = () => {
   }, [isBiometricEnabled, isLocked]);
 
   const handlePinSubmit = async () => {
-    if (pin.length < 4 || pin.length > 6) {
-      Alert.alert('Invalid PIN', 'PIN must be 4-6 digits');
+    const validation = validatePin(pin);
+    if (!validation.valid) {
+      Alert.alert('Invalid PIN', validation.error ?? 'PIN must be 4-6 digits.');
       return;
     }
 
     setIsLoading(true);
-    const success = await unlockWithPin(pin);
+    const success = await unlockWithPin(pin.trim());
     setIsLoading(false);
 
     if (!success) {
@@ -100,7 +102,7 @@ export const LockScreen: React.FC = () => {
         <TextInput
           style={styles.pinInput}
           value={pin}
-          onChangeText={setPin}
+          onChangeText={value => setPin(value.replace(/\D/g, ''))}
           placeholder="4-6 digits"
           keyboardType="numeric"
           secureTextEntry

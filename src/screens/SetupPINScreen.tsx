@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../hooks/useAuth';
+import { validatePinSetup } from '../services/authValidation';
 import { styles } from '../styles';
 
 export const SetupPINScreen: React.FC = () => {
@@ -28,18 +29,14 @@ export const SetupPINScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSetup = async () => {
-    if (pin.length < 4 || pin.length > 6) {
-      Alert.alert('Invalid PIN', 'PIN must be 4-6 digits');
-      return;
-    }
-
-    if (pin !== confirmPin) {
-      Alert.alert('PIN Mismatch', 'PINs do not match');
+    const validation = validatePinSetup(pin, confirmPin);
+    if (!validation.valid) {
+      Alert.alert('Invalid PIN', validation.error ?? 'PIN must be 4-6 digits.');
       return;
     }
 
     setIsLoading(true);
-    const success = await setupPin(pin, confirmPin, enableBiometric);
+    const success = await setupPin(pin.trim(), confirmPin.trim(), enableBiometric);
     setIsLoading(false);
 
     if (success) {
@@ -70,7 +67,7 @@ export const SetupPINScreen: React.FC = () => {
         <TextInput
           style={styles.pinInput}
           value={pin}
-          onChangeText={setPin}
+          onChangeText={value => setPin(value.replace(/\D/g, ''))}
           placeholder="Enter PIN"
           keyboardType="numeric"
           secureTextEntry
@@ -81,7 +78,7 @@ export const SetupPINScreen: React.FC = () => {
         <TextInput
           style={styles.pinInput}
           value={confirmPin}
-          onChangeText={setConfirmPin}
+          onChangeText={value => setConfirmPin(value.replace(/\D/g, ''))}
           placeholder="Confirm PIN"
           keyboardType="numeric"
           secureTextEntry

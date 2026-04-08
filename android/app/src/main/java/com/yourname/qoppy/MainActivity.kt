@@ -1,4 +1,4 @@
-package com.yourname.copyboard
+package com.yourname.qoppy
 
 import android.os.Build
 import android.os.Bundle

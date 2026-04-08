@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.yourname.copyboard'
+    namespace 'com.yourname.qoppy'
     defaultConfig {
-        applicationId 'com.yourname.copyboard'
+        applicationId 'com.yourname.qoppy'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

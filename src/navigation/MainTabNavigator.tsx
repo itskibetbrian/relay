@@ -1,27 +1,21 @@
-// src/navigation/MainTabNavigator.tsx
-//
-// Bottom tab bar: Home | Favorites | Settings
-// Uses custom tab bar for the dark theme.
-
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Home, Heart, Settings } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HomeScreen from '../screens/HomeScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import { COLORS } from '../constants';
 import { MainTabParamList } from '../types';
+import { textFont } from '../constants/typography';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// ── Custom tab bar ─────────────────────────────────────────────────────────
-
 const TAB_ICONS: Record<string, React.ComponentType<any>> = {
-  Home, Favorites: Heart, Settings,
+  Home,
+  Favorites: Heart,
+  Settings,
 };
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -37,7 +31,9 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
         const onPress = () => {
           const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
         };
 
         return (
@@ -45,7 +41,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             key={route.key}
             style={styles.tabItem}
             onPress={onPress}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
           >
             <View style={[styles.tabIconWrap, isFocused && styles.tabIconWrapActive]}>
               <Icon
@@ -55,17 +51,13 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                 fill={isFocused && route.name === 'Favorites' ? '#7C3AED' : 'transparent'}
               />
             </View>
-            <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
-              {String(label)}
-            </Text>
+            <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>{String(label)}</Text>
           </TouchableOpacity>
         );
       })}
     </View>
   );
 }
-
-// ── Navigator ──────────────────────────────────────────────────────────────
 
 export const MainTabNavigator: React.FC = () => (
   <Tab.Navigator
@@ -74,18 +66,23 @@ export const MainTabNavigator: React.FC = () => (
       headerStyle: { backgroundColor: '#FFFFFF' },
       headerTintColor: '#1E1B2E',
       headerShadowVisible: false,
-      headerTitleStyle: { fontWeight: '700', color: '#1E1B2E' },
+      headerTitleStyle: {
+        ...textFont(),
+        fontWeight: '800',
+        color: '#1E1B2E',
+        fontSize: 20,
+      },
     }}
   >
     <Tab.Screen
       name="Home"
       component={HomeScreen}
-      options={{ title: 'Clipsafe', tabBarLabel: 'Home' }}
+      options={{ title: 'Qoppy', tabBarLabel: 'Snippets' }}
     />
     <Tab.Screen
       name="Favorites"
       component={FavoritesScreen}
-      options={{ title: 'Favourites', tabBarLabel: 'Favourites' }}
+      options={{ title: 'Qoppy', tabBarLabel: 'Favorites' }}
     />
     <Tab.Screen
       name="Settings"
@@ -119,13 +116,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F3FF',
   },
   tabLabel: {
-    fontSize: 10,
-    fontWeight: '500',
+    ...textFont(),
+    fontSize: 11,
+    fontWeight: '600',
     color: '#9CA3AF',
   },
   tabLabelActive: {
     color: '#7C3AED',
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });
 

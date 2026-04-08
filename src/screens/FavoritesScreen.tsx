@@ -1,8 +1,4 @@
-// src/screens/FavoritesScreen.tsx
-//
-// Shows only starred snippets, sorted by use count (most used first).
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useLayoutEffect } from 'react';
 import {
   View,
   FlatList,
@@ -10,17 +6,19 @@ import {
   StyleSheet,
   Dimensions,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
-import { useFocusEffect } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Crown } from 'lucide-react-native';
 
 import { SnippetCard } from '../components/cards/SnippetCard';
 import { db } from '../services/database';
 import { useSnippets } from '../hooks/useSnippets';
 import { Snippet, RootStackParamList } from '../types';
 import { COLORS } from '../constants';
+import { textFont } from '../constants/typography';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -31,12 +29,18 @@ export const FavoritesScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
   const [favorites, setFavorites] = useState<Snippet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const {
-    copiedId,
-    copySnippet,
-    toggleFavorite: toggleFav,
-    deleteSnippet,
-  } = useSnippets();
+  const { copiedId, copySnippet, toggleFavorite: toggleFav, deleteSnippet } = useSnippets();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Qoppy',
+      headerRight: () => (
+        <TouchableOpacity onPress={() => navigation.navigate('Paywall')} style={styles.headerBtn} activeOpacity={0.75}>
+          <Crown size={20} color="#7C3AED" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const loadFavorites = useCallback(async () => {
     setIsLoading(true);
@@ -48,8 +52,9 @@ export const FavoritesScreen: React.FC = () => {
     }
   }, []);
 
-  // Reload every time tab is focused
-  useFocusEffect(useCallback(() => { loadFavorites(); }, [loadFavorites]));
+  useFocusEffect(useCallback(() => {
+    loadFavorites();
+  }, [loadFavorites]));
 
   const handleToggleFav = useCallback(async (id: string) => {
     await toggleFav(id);
@@ -64,14 +69,14 @@ export const FavoritesScreen: React.FC = () => {
           isCopied={copiedId === item.id}
           onCopy={copySnippet}
           onFavorite={handleToggleFav}
-          onEdit={s => navigation.navigate('AddSnippet', { snippetId: s.id })}
-            onDelete={async id => {
-              await deleteSnippet(id);
-              setFavorites(prev => prev.filter(s => s.id !== id));
-            }}
-          />
-        </Animated.View>
-      ),
+          onEdit={snippet => navigation.navigate('AddSnippet', { snippetId: snippet.id })}
+          onDelete={async id => {
+            await deleteSnippet(id);
+            setFavorites(prev => prev.filter(s => s.id !== id));
+          }}
+        />
+      </Animated.View>
+    ),
     [copiedId, copySnippet, deleteSnippet, handleToggleFav, navigation]
   );
 
@@ -94,15 +99,15 @@ export const FavoritesScreen: React.FC = () => {
         contentContainerStyle={styles.list}
         ListHeaderComponent={
           <Text style={styles.count}>
-            {favorites.length} favourite{favorites.length !== 1 ? 's' : ''}
+            {favorites.length} favorite{favorites.length !== 1 ? 's' : ''}
           </Text>
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>❤️</Text>
-            <Text style={styles.emptyTitle}>No favourites yet</Text>
+            <Text style={styles.emptyIcon}>{"<3"}</Text>
+            <Text style={styles.emptyTitle}>No favorites yet</Text>
             <Text style={styles.emptySubtitle}>
-              Tap the heart on any snippet to save it here
+              Tap the heart on any snippet to save it here.
             </Text>
           </View>
         }
@@ -114,13 +119,23 @@ export const FavoritesScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background },
+  headerBtn: {
+    padding: 8,
+  },
   list: { paddingBottom: 80 },
   row: { justifyContent: 'flex-start', paddingHorizontal: 8 },
-  count: { fontSize: 12, fontWeight: '500', color: COLORS.textMuted, paddingHorizontal: 20, paddingVertical: 12 },
+  count: {
+    ...textFont(),
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
   empty: { alignItems: 'center', paddingTop: 80, paddingHorizontal: 32, gap: 12 },
-  emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: COLORS.text },
-  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 21 },
+  emptyIcon: { ...textFont(true), fontSize: 44, color: '#EF4444' },
+  emptyTitle: { ...textFont(), fontSize: 22, fontWeight: '800', color: COLORS.text },
+  emptySubtitle: { ...textFont(), fontSize: 15, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 23 },
 });
 
 export default FavoritesScreen;

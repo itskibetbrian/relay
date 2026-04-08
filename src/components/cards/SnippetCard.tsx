@@ -24,6 +24,7 @@ import Animated, {
 import { Check, Copy, Heart, MoreVertical } from 'lucide-react-native';
 import { Snippet } from '../../types';
 import { COLORS, ANIMATION_DURATION } from '../../constants';
+import { textFont } from '../../constants/typography';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // 2 columns on phones ≤ 375px wide, 3 columns on larger screens
@@ -255,21 +256,24 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   categoryText: {
-    fontSize: 10,
+    ...textFont(),
+    fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.3,
   },
   title: {
-    fontSize: 14,
+    ...textFont(),
+    fontSize: 15,
     fontWeight: '700',
     color: '#1E1B2E',
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: 6,
   },
   content: {
-    fontSize: 12,
+    ...textFont(),
+    fontSize: 13,
     color: '#6B7280',
-    lineHeight: 17,
+    lineHeight: 19,
     flex: 1,
   },
   footer: {
@@ -291,7 +295,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B98120',
   },
   copyLabel: {
-    fontSize: 10,
+    ...textFont(),
+    fontSize: 11,
     color: COLORS.textMuted,
     fontWeight: '500',
   },

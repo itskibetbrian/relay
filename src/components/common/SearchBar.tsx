@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Search, X } from 'lucide-react-native';
 import { COLORS } from '../../constants';
+import { textFont } from '../../constants/typography';
 
 interface SearchBarProps {
   value: string;
@@ -62,8 +63,9 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   input: {
+    ...textFont(),
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     color: '#1E1B2E',
     padding: 0,
   },
