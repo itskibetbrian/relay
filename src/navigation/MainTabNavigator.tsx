@@ -38,7 +38,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         style={[
           styles.tabBarBackdrop,
           {
-            backgroundColor: mode === 'dark' ? 'rgba(20, 19, 28, 0.22)' : 'rgba(237, 233, 246, 0.42)',
+            backgroundColor: mode === 'dark' ? 'rgba(20, 19, 28, 0.42)' : 'rgba(237, 233, 246, 0.68)',
           },
         ]}
       />
