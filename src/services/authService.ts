@@ -8,6 +8,7 @@ const AUTH_HASH_KEY = 'auth_hash';
 const AUTH_METHOD_KEY = 'auth_method';
 const BIOMETRIC_KEY = 'biometric_enabled';
 const LEGACY_PIN_HASH_KEY = 'pin_hash';
+const SESSION_EXPIRES_AT_KEY = 'auth_session_expires_at';
 const BCRYPT_SALT_ROUNDS = 12;
 
 export interface AuthConfig {
@@ -39,6 +40,40 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     return this.sessionToken !== null;
+  }
+
+  async startSession(durationMs: number): Promise<void> {
+    this.setSessionToken(this.generateSessionToken());
+    await db.setPreference(SESSION_EXPIRES_AT_KEY, String(Date.now() + durationMs));
+  }
+
+  async refreshSession(durationMs: number): Promise<void> {
+    if (!this.sessionToken) {
+      this.setSessionToken(this.generateSessionToken());
+    }
+
+    await db.setPreference(SESSION_EXPIRES_AT_KEY, String(Date.now() + durationMs));
+  }
+
+  async restoreSession(): Promise<boolean> {
+    const rawValue = await db.getPreference(SESSION_EXPIRES_AT_KEY);
+    const expiresAt = rawValue ? Number(rawValue) : NaN;
+
+    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+      await this.clearSession();
+      return false;
+    }
+
+    if (!this.sessionToken) {
+      this.setSessionToken(this.generateSessionToken());
+    }
+
+    return true;
+  }
+
+  async clearSession(): Promise<void> {
+    this.clearSessionToken();
+    await db.setPreference(SESSION_EXPIRES_AT_KEY, '');
   }
 
   async hashSecret(method: AuthMethod, secret: string): Promise<string> {
@@ -137,6 +172,7 @@ export class AuthService {
       this.deleteStoredSecretHash(),
       this.deleteBiometricEnabled(),
       this.deleteAuthMethod(),
+      this.clearSession(),
     ]);
   }
 
@@ -145,6 +181,7 @@ export class AuthService {
       this.deleteStoredSecretHash(),
       this.deleteAuthMethod(),
       this.storeBiometricEnabled(false),
+      this.clearSession(),
     ]);
     await this.updateAuthConfig({
       biometricEnabled: false,
@@ -280,31 +317,62 @@ export class AuthService {
   }
 
   private async setPersistedValue(key: string, value: string): Promise<void> {
-    try {
-      await SecureStore.setItemAsync(key, value);
+    if (key === AUTH_HASH_KEY || key === LEGACY_PIN_HASH_KEY) {
+      try {
+        await SecureStore.setItemAsync(key, value);
+      } catch {
+        // Keep going with the local DB fallback below.
+      }
+
+      await db.setAuthConfig({ pinHash: value });
       await db.setPreference(`secure_${key}`, '');
-    } catch {
-      throw new Error('Unable to securely save app lock settings.');
+      return;
     }
+
+    await db.setPreference(key, value);
+    await db.setPreference(`secure_${key}`, '');
   }
 
   private async getPersistedValue(key: string): Promise<string | null> {
-    try {
-      const [secureValue, legacyValue] = await Promise.all([
-        SecureStore.getItemAsync(key),
+    if (key === AUTH_HASH_KEY || key === LEGACY_PIN_HASH_KEY) {
+      try {
+        const secureValue = await SecureStore.getItemAsync(key);
+        if (secureValue !== null) {
+          await db.setAuthConfig({ pinHash: secureValue });
+          await db.setPreference(`secure_${key}`, '');
+          return secureValue;
+        }
+      } catch {
+        // Fall through to the local DB values below.
+      }
+
+      const [config, legacyValue] = await Promise.all([
+        db.getAuthConfig(),
         db.getPreference(`secure_${key}`),
       ]);
 
-      if (secureValue !== null) {
-        if (legacyValue) {
-          await db.setPreference(`secure_${key}`, '');
-        }
-        return secureValue;
+      if (config?.pinHash) {
+        return config.pinHash;
       }
 
       if (legacyValue) {
-        await SecureStore.setItemAsync(key, legacyValue);
+        await db.setAuthConfig({ pinHash: legacyValue });
         await db.setPreference(`secure_${key}`, '');
+        return legacyValue;
+      }
+
+      return null;
+    }
+
+    const value = await db.getPreference(key);
+    if (value !== undefined && value !== '') {
+      return value;
+    }
+
+    try {
+      const legacyValue = await SecureStore.getItemAsync(key);
+      if (legacyValue !== null) {
+        await db.setPreference(key, legacyValue);
         return legacyValue;
       }
     } catch {
@@ -315,13 +383,30 @@ export class AuthService {
   }
 
   private async deletePersistedValue(key: string): Promise<void> {
+    if (key === AUTH_HASH_KEY || key === LEGACY_PIN_HASH_KEY) {
+      try {
+        await SecureStore.deleteItemAsync(key);
+      } catch {
+        // Best-effort secure deletion only.
+      }
+
+      await Promise.all([
+        db.setAuthConfig({ pinHash: null }),
+        db.setPreference(`secure_${key}`, ''),
+      ]);
+      return;
+    }
+
     try {
       await SecureStore.deleteItemAsync(key);
     } catch {
       // Best-effort secure deletion only.
     }
 
-    await db.setPreference(`secure_${key}`, '');
+    await Promise.all([
+      db.setPreference(key, ''),
+      db.setPreference(`secure_${key}`, ''),
+    ]);
   }
 
   private isBcryptHash(value: string): boolean {

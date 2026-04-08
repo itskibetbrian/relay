@@ -337,7 +337,7 @@ class DatabaseService {
       : null;
   }
 
-  async setAuthConfig(config: { pinHash?: string; biometricEnabled?: boolean; failedAttempts?: number; lockedUntil?: number | null }): Promise<void> {
+  async setAuthConfig(config: { pinHash?: string | null; biometricEnabled?: boolean; failedAttempts?: number; lockedUntil?: number | null }): Promise<void> {
     const db = this.getDb();
     const current = await this.getAuthConfig();
 
