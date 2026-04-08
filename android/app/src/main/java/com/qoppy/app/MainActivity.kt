@@ -1,4 +1,4 @@
-package com.yourname.qoppy
+package com.qoppy.app
 
 import android.os.Build
 import android.os.Bundle

@@ -75,7 +75,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mode, setMode] = useState<AppThemeMode>('light');
+  const [mode, setMode] = useState<AppThemeMode>('dark');
 
   useEffect(() => {
     let isMounted = true;
