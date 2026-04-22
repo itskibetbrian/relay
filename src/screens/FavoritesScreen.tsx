@@ -4,9 +4,7 @@ import {
   FlatList,
   Text,
   StyleSheet,
-  Dimensions,
   ActivityIndicator,
-  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -20,8 +18,7 @@ import { useTheme } from '../hooks/useTheme';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const NUM_COLUMNS = SCREEN_WIDTH > 420 ? 3 : 2;
+const NUM_COLUMNS = 2;
 
 export const FavoritesScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
@@ -57,19 +54,17 @@ export const FavoritesScreen: React.FC = () => {
 
   const renderItem = useCallback(
     ({ item }: { item: Snippet }) => (
-      <View>
-        <SnippetCard
-          snippet={item}
-          isCopied={copiedId === item.id}
-          onCopy={copySnippet}
-          onFavorite={handleToggleFav}
-          onEdit={snippet => navigation.navigate('AddSnippet', { snippetId: snippet.id })}
-          onDelete={async id => {
-            await deleteSnippet(id);
-            setFavorites(prev => prev.filter(s => s.id !== id));
-          }}
-        />
-      </View>
+      <SnippetCard
+        snippet={item}
+        isCopied={copiedId === item.id}
+        onCopy={copySnippet}
+        onFavorite={handleToggleFav}
+        onEdit={snippet => navigation.navigate('AddSnippet', { snippetId: snippet.id })}
+        onDelete={async id => {
+          await deleteSnippet(id);
+          setFavorites(prev => prev.filter(s => s.id !== id));
+        }}
+      />
     ),
     [copiedId, copySnippet, deleteSnippet, handleToggleFav, navigation]
   );
@@ -113,14 +108,14 @@ export const FavoritesScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  list: { paddingBottom: 112 },
-  row: { justifyContent: 'flex-start', paddingHorizontal: 8 },
+  list: { paddingTop: 2, paddingBottom: 112 },
+  row: { justifyContent: 'space-between', paddingHorizontal: 12 },
   count: {
     ...textFont(),
     fontSize: 13,
     fontWeight: '600',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   empty: { alignItems: 'center', paddingTop: 80, paddingHorizontal: 32, gap: 12 },
   emptyIcon: { ...textFont(true), fontSize: 44 },

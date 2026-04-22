@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -39,12 +39,14 @@ export const SetupPINScreen: React.FC = () => {
     skipPinSetup,
     isBiometricAvailable,
     isProtectionEnabled,
+    isBiometricEnabled,
+    authMethod,
   } = useAuth();
 
-  const [method, setMethod] = useState<AuthMethod>('pin');
+  const [method, setMethod] = useState<AuthMethod>(authMethod ?? 'pin');
   const [secret, setSecret] = useState('');
   const [confirmSecret, setConfirmSecret] = useState('');
-  const [enableBiometric, setEnableBiometric] = useState(false);
+  const [enableBiometric, setEnableBiometric] = useState(isBiometricEnabled);
   const [isLoading, setIsLoading] = useState(false);
 
   const labels = useMemo(() => {
@@ -66,6 +68,20 @@ export const SetupPINScreen: React.FC = () => {
       helper: 'Use exactly 4 digits for a quick local unlock.',
     };
   }, [method]);
+
+  useEffect(() => {
+    if (!fromSettings) {
+      return;
+    }
+
+    if (authMethod) {
+      setMethod(authMethod);
+    }
+
+    setEnableBiometric(isBiometricEnabled || authMethod === 'biometric');
+    setSecret('');
+    setConfirmSecret('');
+  }, [authMethod, fromSettings, isBiometricEnabled]);
 
   const handleSecretChange = (value: string) => {
     if (method === 'pin') {
@@ -91,7 +107,10 @@ export const SetupPINScreen: React.FC = () => {
     setConfirmSecret('');
     if (nextMethod === 'biometric') {
       setEnableBiometric(true);
+      return;
     }
+
+    setEnableBiometric(isBiometricEnabled && authMethod !== 'biometric');
   };
 
   const handleSetup = async () => {
@@ -102,7 +121,12 @@ export const SetupPINScreen: React.FC = () => {
     }
 
     setIsLoading(true);
-    const success = await setupProtection(method, secret.trim(), confirmSecret.trim(), method === 'biometric' ? true : enableBiometric);
+    const success = await setupProtection(
+      method,
+      secret.trim(),
+      confirmSecret.trim(),
+      method === 'biometric' ? true : enableBiometric
+    );
     setIsLoading(false);
 
     if (success) {
@@ -132,7 +156,7 @@ export const SetupPINScreen: React.FC = () => {
           {fromSettings && isProtectionEnabled ? 'Update App Lock' : 'Set Up App Lock'}
         </Text>
         <Text style={styles.setupSubtitle}>
-          Choose how Qoppy unlocks on this phone. Everything is saved locally on your device.
+          Choose whether Qoppy unlocks with a PIN, password, or biometrics. Everything is saved locally on your device.
         </Text>
 
         <View style={styles.authOptionRow}>

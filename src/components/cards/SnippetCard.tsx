@@ -28,11 +28,10 @@ import { textFont } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// 2 columns on phones ≤ 375px wide, 3 columns on larger screens
-const NUM_COLUMNS = SCREEN_WIDTH > 420 ? 3 : 2;
-const CARD_MARGIN = 8;
-const CARD_WIDTH =
-  (SCREEN_WIDTH - CARD_MARGIN * (NUM_COLUMNS + 1) * 2) / NUM_COLUMNS;
+const NUM_COLUMNS = 2;
+const LIST_HORIZONTAL_PADDING = 12;
+const CARD_GAP = 8;
+const CARD_WIDTH = (SCREEN_WIDTH - LIST_HORIZONTAL_PADDING * 2 - CARD_GAP) / NUM_COLUMNS;
 
 interface SnippetCardProps {
   snippet: Snippet;
@@ -207,7 +206,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
 const styles = StyleSheet.create({
   wrapper: {
     width: CARD_WIDTH,
-    margin: CARD_MARGIN,
+    marginBottom: CARD_GAP,
     position: 'relative',
   },
   glow: {
@@ -224,9 +223,10 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 16,
-    padding: 14,
+    paddingHorizontal: 11,
+    paddingVertical: 10,
     borderWidth: 1,
-    minHeight: 140,
+    minHeight: 116,
     justifyContent: 'space-between',
     ...Platform.select({
       ios: {
@@ -244,9 +244,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginBottom: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    marginBottom: 6,
     gap: 4,
   },
   categoryDot: {
@@ -256,40 +256,40 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     ...textFont(),
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     letterSpacing: 0.3,
   },
   title: {
     ...textFont(),
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    lineHeight: 22,
-    marginBottom: 6,
+    lineHeight: 18,
+    marginBottom: 4,
   },
   content: {
     ...textFont(),
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 16,
     flex: 1,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 8,
   },
   copyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
     borderRadius: 8,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
   },
   copyLabel: {
     ...textFont(),
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.textMuted,
     fontWeight: '500',
   },

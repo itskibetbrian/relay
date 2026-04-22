@@ -5,13 +5,11 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions,
   ActivityIndicator,
   StatusBar,
   Modal,
   Pressable,
 } from 'react-native';
-import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Plus } from 'lucide-react-native';
@@ -28,8 +26,7 @@ import { useTheme } from '../hooks/useTheme';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const NUM_COLUMNS = SCREEN_WIDTH > 420 ? 3 : 2;
+const NUM_COLUMNS = 2;
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
@@ -67,20 +64,14 @@ export const HomeScreen: React.FC = () => {
 
   const renderItem = useCallback(
     ({ item }: { item: Snippet }) => (
-      <Animated.View
-        entering={FadeIn.duration(ANIMATION_DURATION.normal)}
-        exiting={FadeOut.duration(ANIMATION_DURATION.fast)}
-        layout={Layout.springify()}
-      >
-        <SnippetCard
-          snippet={item}
-          isCopied={copiedId === item.id}
-          onCopy={copySnippet}
-          onFavorite={toggleFavorite}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      </Animated.View>
+      <SnippetCard
+        snippet={item}
+        isCopied={copiedId === item.id}
+        onCopy={copySnippet}
+        onFavorite={toggleFavorite}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     ),
     [copiedId, copySnippet, toggleFavorite, handleEdit, handleDelete]
   );
@@ -181,17 +172,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   list: {
+    paddingTop: 2,
     paddingBottom: 118,
   },
   row: {
-    justifyContent: 'flex-start',
-    paddingHorizontal: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
   },
   count: {
     ...textFont(),
     fontSize: 13,
-    paddingHorizontal: 20,
-    paddingBottom: 4,
+    paddingHorizontal: 16,
+    paddingBottom: 2,
     fontWeight: '600',
   },
   empty: {

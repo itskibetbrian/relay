@@ -53,11 +53,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 14,
     borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     marginHorizontal: 16,
-    marginVertical: 8,
-    gap: 10,
+    marginVertical: 6,
+    gap: 8,
   },
   icon: {
     flexShrink: 0,
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   input: {
     ...textFont(),
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     padding: 0,
   },
 });

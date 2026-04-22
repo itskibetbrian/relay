@@ -3,7 +3,7 @@
 import React from 'react';
 import {
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Text,
   StyleSheet,
   View,
@@ -61,15 +61,19 @@ interface ChipProps {
 }
 
 const Chip: React.FC<ChipProps> = ({ label, color, isActive, onPress, theme }) => (
-  <TouchableOpacity
-    style={[
+  <Pressable
+    style={({ pressed }) => [
       styles.chip,
       isActive
         ? { backgroundColor: theme.primary, borderColor: theme.primary }
-        : { backgroundColor: theme.surfaceAlt, borderColor: theme.border },
+        : {
+            backgroundColor: pressed ? theme.surface : theme.surfaceAlt,
+            borderColor: pressed ? color : theme.border,
+          },
+      pressed && !isActive && styles.chipPressed,
     ]}
     onPress={onPress}
-    activeOpacity={0.7}
+    android_ripple={null}
   >
     {isActive && <View style={[styles.activeDot, { backgroundColor: theme.onPrimary }]} />}
     <Text
@@ -80,14 +84,14 @@ const Chip: React.FC<ChipProps> = ({ label, color, isActive, onPress, theme }) =
     >
       {label}
     </Text>
-  </TouchableOpacity>
+  </Pressable>
 );
 
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
+    paddingVertical: 6,
+    gap: 6,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -95,10 +99,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderWidth: 1,
     gap: 5,
+  },
+  chipPressed: {
+    opacity: 0.92,
   },
   activeDot: {
     width: 6,
@@ -107,7 +114,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   chipText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.2,
   },
