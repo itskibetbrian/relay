@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Home, Heart, Moon, Settings, Sun } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -65,20 +65,12 @@ const TabItem: React.FC<TabItemProps> = ({ label, isFocused, onPress, icon: Icon
         ]}
       >
         <Icon
-          size={21}
+          size={23}
           color={isFocused ? theme.onPrimary : theme.tabInactive}
           strokeWidth={isFocused ? 2.5 : 2}
           fill={isFocused && routeName === 'Favorites' ? theme.onPrimary : 'transparent'}
         />
       </View>
-      <Text
-        style={[
-          styles.tabLabel,
-          { color: isFocused ? theme.text : theme.tabInactive },
-        ]}
-      >
-        {label}
-      </Text>
     </AnimatedTouchableOpacity>
   );
 };
@@ -98,16 +90,32 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       ]}
     >
       <View pointerEvents="none" style={styles.tabBarBackdrop}>
-        {Platform.OS === 'ios' ? (
-          <BlurView
-            intensity={mode === 'dark' ? 48 : 56}
-            tint={mode === 'dark' ? 'dark' : 'light'}
-            style={StyleSheet.absoluteFillObject}
-          />
-        ) : null}
-        <View style={[styles.tabBarShade, { backgroundColor: theme.tabBackdrop }]} />
+        <BlurView
+          intensity={mode === 'dark' ? 72 : 82}
+          tint={mode === 'dark' ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View
+          style={[
+            styles.tabBarGlassTint,
+            {
+              backgroundColor:
+                mode === 'dark' ? 'rgba(20, 26, 35, 0.46)' : 'rgba(255, 255, 255, 0.08)',
+              borderColor:
+                mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.16)',
+            },
+          ]}
+        />
       </View>
-      <View style={[styles.tabBar, { backgroundColor: theme.tabGlass, shadowColor: theme.shadow }]}>
+      <View
+        style={[
+          styles.tabBar,
+          {
+            backgroundColor: 'transparent',
+            shadowColor: theme.shadow,
+          },
+        ]}
+      >
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const label = options.tabBarLabel ?? route.name;
@@ -220,32 +228,34 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 0,
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0,
+    shadowOpacity: 0.16,
     shadowRadius: 20,
-    elevation: 0,
+    elevation: 12,
   },
   tabBarBackdrop: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 28,
     overflow: 'hidden',
   },
-  tabBarShade: {
+  tabBarGlassTint: {
     ...StyleSheet.absoluteFillObject,
+    borderWidth: 1,
+    borderRadius: 28,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
-    gap: 4,
+    minHeight: 56,
     borderRadius: 20,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 4,
+    backgroundColor: 'transparent',
   },
   tabIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -253,7 +263,8 @@ const styles = StyleSheet.create({
   tabLabel: {
     ...textFont(),
     fontSize: 11,
-    fontWeight: '900',
+    fontWeight: 'bold',
+    backgroundColor: 'transparent',
   },
 });
 

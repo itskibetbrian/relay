@@ -25,9 +25,6 @@ import {
   Mail,
   Share2,
   Bug,
-  Moon,
-  Sun,
-  Smartphone,
   Cloud,
   ShieldAlert,
 } from 'lucide-react-native';
@@ -35,7 +32,7 @@ import { db } from '../services/database';
 import { COLORS } from '../constants';
 import { textFont } from '../constants/typography';
 import { RootStackParamList } from '../types';
-import { useTheme, AppThemePreference } from '../hooks/useTheme';
+import { useTheme } from '../hooks/useTheme';
 import { useSnippets } from '../hooks/useSnippets';
 import * as AuthSession from 'expo-auth-session';
 import {
@@ -94,19 +91,9 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
   );
 };
 
-const themeOptions: Array<{
-  key: AppThemePreference;
-  label: string;
-  icon: React.ComponentType<any>;
-}> = [
-  { key: 'light', label: 'Light', icon: Sun },
-  { key: 'dark', label: 'Dark', icon: Moon },
-  { key: 'system', label: 'System', icon: Smartphone },
-];
-
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
-  const { theme, preference, setThemeMode } = useTheme();
+  const { theme } = useTheme();
   const { deleteAllSnippets } = useSnippets();
   const [snippetCount, setSnippetCount] = useState(0);
   const [hapticEnabled, setHapticEnabled] = useState(true);
@@ -355,34 +342,6 @@ export const SettingsScreen: React.FC = () => {
         />
       </Section>
 
-      <Section title="Appearance">
-        <View style={styles.themeRow}>
-          {themeOptions.map(option => {
-            const Icon = option.icon;
-            const active = preference === option.key;
-            return (
-              <TouchableOpacity
-                key={option.key}
-                style={[
-                  styles.themeOption,
-                  {
-                    backgroundColor: active ? theme.primary : theme.surfaceAlt,
-                    borderColor: active ? theme.primary : theme.border,
-                  },
-                ]}
-                onPress={() => void setThemeMode(option.key)}
-                activeOpacity={0.85}
-              >
-                <Icon size={16} color={active ? theme.onPrimary : theme.textSecondary} />
-                <Text style={[styles.themeOptionText, { color: active ? theme.onPrimary : theme.text }]}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </Section>
-
       <Section title="Preferences">
         <Row
           icon={Zap}
@@ -514,24 +473,6 @@ const styles = StyleSheet.create({
   rowText: { flex: 1 },
   rowLabel: { ...textFont(), fontSize: 16, fontWeight: '700' },
   rowSublabel: { ...textFont(), fontSize: 13, marginTop: 2, lineHeight: 19 },
-  themeRow: {
-    flexDirection: 'row',
-    gap: 10,
-    padding: 14,
-  },
-  themeOption: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-    gap: 8,
-  },
-  themeOptionText: {
-    ...textFont(),
-    fontSize: 13,
-    fontWeight: '700',
-  },
   version: { ...textFont(), textAlign: 'center', fontSize: 13, marginTop: 8 },
 });
 

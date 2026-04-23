@@ -87,6 +87,7 @@ interface ThemeContextValue {
   theme: AppThemePalette;
   mode: AppThemeMode;
   preference: AppThemePreference;
+  isThemeReady: boolean;
   toggleTheme: () => Promise<void>;
   setThemeMode: (preference: AppThemePreference) => Promise<void>;
 }
@@ -96,6 +97,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemColorScheme = useColorScheme();
   const [preference, setPreference] = useState<AppThemePreference>('system');
+  const [isThemeReady, setIsThemeReady] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -108,6 +110,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       } catch {
         // Ignore until the database is ready.
+      } finally {
+        if (isMounted) setIsThemeReady(true);
       }
     })();
 
@@ -139,9 +143,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     theme: mode === 'light' ? LIGHT_THEME : DARK_THEME,
     mode,
     preference,
+    isThemeReady,
     toggleTheme,
     setThemeMode,
-  }), [mode, preference, setThemeMode, toggleTheme]);
+  }), [mode, preference, isThemeReady, setThemeMode, toggleTheme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };

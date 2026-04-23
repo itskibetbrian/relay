@@ -99,11 +99,6 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
 
   // ── Render ──────────────────────────────────────────────────────────────
 
-  const contentPreview =
-    snippet.content.length > 80
-      ? snippet.content.slice(0, 80) + '…'
-      : snippet.content;
-
   return (
     <Animated.View style={[styles.wrapper, cardAnimStyle]}>
       {/* Glow ring that pulses on copy */}
@@ -146,13 +141,21 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
           )}
 
           {/* Title */}
-          <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
+          <Text
+            style={[styles.title, { color: theme.text }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {snippet.title}
           </Text>
 
           {/* Content preview */}
-          <Text style={[styles.content, { color: theme.textSecondary }]} numberOfLines={3}>
-            {contentPreview}
+          <Text
+            style={[styles.content, { color: theme.textSecondary }]}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {snippet.content}
           </Text>
         </View>
 
@@ -224,7 +227,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 10,
     borderWidth: 1,
-    minHeight: 116,
+    height: 138,
     justifyContent: 'space-between',
     ...Platform.select({
       ios: {
@@ -240,6 +243,7 @@ const styles = StyleSheet.create({
   contentWrap: {
     flex: 1,
     justifyContent: 'space-between',
+    minHeight: 0,
   },
   categoryBadge: {
     flexDirection: 'row',
@@ -273,6 +277,7 @@ const styles = StyleSheet.create({
     ...textFont(),
     fontSize: 12,
     lineHeight: 16,
+    flexShrink: 1,
   },
   footer: {
     flexDirection: 'row',

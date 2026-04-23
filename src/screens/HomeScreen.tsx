@@ -13,6 +13,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Plus } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SnippetCard } from '../components/cards/SnippetCard';
 import { CategoryChipBar } from '../components/common/CategoryChipBar';
@@ -31,6 +32,7 @@ const NUM_COLUMNS = 2;
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
+  const insets = useSafeAreaInsets();
   const { theme, mode } = useTheme();
   const {
     snippets,
@@ -95,29 +97,31 @@ export const HomeScreen: React.FC = () => {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
 
-      <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search snippets..." />
-
-      <CategoryChipBar
-        categories={categories}
-        activeId={activeCategory}
-        onSelect={filterByCategory}
-      />
-
-      {!isLoading && (
-        <Text style={[styles.count, { color: theme.textSecondary }]}>
-          {snippets.length} snippet{snippets.length !== 1 ? 's' : ''}
-        </Text>
-      )}
-
       <FlatList
         data={gridSnippets}
         keyExtractor={item => item.id}
         renderItem={renderItem}
         numColumns={NUM_COLUMNS}
         columnWrapperStyle={NUM_COLUMNS > 1 ? styles.row : undefined}
+        style={styles.listView}
         contentContainerStyle={styles.list}
         onRefresh={refresh}
         refreshing={isLoading && snippets.length > 0}
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search snippets..." />
+            <CategoryChipBar
+              categories={categories}
+              activeId={activeCategory}
+              onSelect={filterByCategory}
+            />
+            {!isLoading && (
+              <Text style={[styles.count, { color: theme.textSecondary }]}>
+                {snippets.length} snippet{snippets.length !== 1 ? 's' : ''}
+              </Text>
+            )}
+          </View>
+        }
         ListEmptyComponent={
           isLoading ? (
             <ActivityIndicator style={styles.loader} color={theme.primary} size="large" />
@@ -128,7 +132,14 @@ export const HomeScreen: React.FC = () => {
       />
 
       <TouchableOpacity
-        style={[styles.fab, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
+        style={[
+          styles.fab,
+          {
+            backgroundColor: theme.primary,
+            shadowColor: theme.primary,
+            bottom: insets.bottom + 100,
+          },
+        ]}
         onPress={() => navigation.navigate('AddSnippet', {})}
         activeOpacity={0.85}
       >
@@ -175,10 +186,23 @@ export const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+  },
+  listView: {
+    flex: 1,
+    alignSelf: 'stretch',
   },
   list: {
     paddingTop: 2,
-    paddingBottom: 118,
+    paddingBottom: 152,
+    flexGrow: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+  },
+  listHeader: {
+    alignSelf: 'stretch',
+    justifyContent: 'flex-start',
   },
   row: {
     alignItems: 'stretch',
@@ -198,9 +222,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   empty: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     paddingTop: 80,
     paddingHorizontal: 32,
   },
@@ -271,7 +293,6 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 92,
     right: 24,
     width: 58,
     height: 58,

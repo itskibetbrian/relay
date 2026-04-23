@@ -30,9 +30,13 @@ const LaunchSplash = ({ backgroundColor, textColor }: { backgroundColor: string;
 );
 
 export const RootNavigator: React.FC = () => {
-  const { theme, mode } = useTheme();
+  const { theme, mode, isThemeReady } = useTheme();
   const [isReady, setIsReady] = useState(false);
   const [initialRoute, setInitialRoute] = useState<'Onboarding' | 'Main'>('Onboarding');
+
+  // Show splash immediately until both theme and DB are ready
+  const splashBg = isThemeReady ? theme.background : '#0F0F13';
+  const splashText = isThemeReady ? theme.text : '#FFFFFF';
 
   const navTheme = {
     ...DarkTheme,
@@ -76,8 +80,8 @@ export const RootNavigator: React.FC = () => {
     };
   }, []);
 
-  if (!isReady) {
-    return <LaunchSplash backgroundColor={theme.background} textColor={theme.text} />;
+  if (!isReady || !isThemeReady) {
+    return <LaunchSplash backgroundColor={splashBg} textColor={splashText} />;
   }
 
   return (
