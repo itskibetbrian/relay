@@ -34,7 +34,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["react-native-iap"],
+    "plugins": [],
     "extra": {
       "googleAuth": {
         "androidClientId": "",

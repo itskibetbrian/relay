@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Check, Crown, LoaderCircle, X } from 'lucide-react-native';
-import { COLORS } from '../constants';
 import { textFont } from '../constants/typography';
 import { useTheme } from '../hooks/useTheme';
 import { db } from '../services/database';
@@ -222,7 +221,7 @@ export const PaywallScreen: React.FC = () => {
         {BENEFITS.map(text => (
           <View key={text} style={styles.benefitRow}>
             <View style={[styles.checkCircle, { backgroundColor: `${theme.success}20` }]}>
-              <Check size={14} color={COLORS.success} strokeWidth={2.5} />
+              <Check size={14} color={theme.success} strokeWidth={2.5} />
             </View>
             <Text style={[styles.benefitText, { color: theme.text }]}>{text}</Text>
           </View>

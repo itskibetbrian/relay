@@ -40,7 +40,7 @@ import {
 } from 'lucide-react-native';
 import { useCategories } from '../hooks/useCategories';
 import { Category } from '../types';
-import { COLORS, CATEGORY_COLORS, ANIMATION_DURATION } from '../constants';
+import { CATEGORY_COLORS, ANIMATION_DURATION } from '../constants';
 import { useTheme } from '../hooks/useTheme';
 
 // ── Icon catalogue ─────────────────────────────────────────────────────────
@@ -88,7 +88,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({ category, onEdit, onDelete })
         onPress={() => onDelete(category)}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Trash2 size={16} color={COLORS.danger} />
+        <Trash2 size={16} color={theme.danger} />
       </TouchableOpacity>
     </Animated.View>
   );

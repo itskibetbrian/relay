@@ -29,7 +29,6 @@ import {
   ShieldAlert,
 } from 'lucide-react-native';
 import { db } from '../services/database';
-import { COLORS } from '../constants';
 import { textFont } from '../constants/typography';
 import { RootStackParamList } from '../types';
 import { useTheme } from '../hooks/useTheme';
@@ -58,8 +57,9 @@ interface RowProps {
   danger?: boolean;
 }
 
-const Row: React.FC<RowProps> = ({ icon: Icon, iconColor = COLORS.primary, label, sublabel, onPress, right, danger }) => {
+const Row: React.FC<RowProps> = ({ icon: Icon, iconColor, label, sublabel, onPress, right, danger }) => {
   const { theme } = useTheme();
+  const finalIconColor = iconColor || theme.primary;
 
   return (
     <TouchableOpacity
@@ -68,8 +68,8 @@ const Row: React.FC<RowProps> = ({ icon: Icon, iconColor = COLORS.primary, label
       disabled={!onPress}
       activeOpacity={onPress ? 0.7 : 1}
     >
-      <View style={[styles.rowIcon, { backgroundColor: `${iconColor}18` }]}>
-        <Icon size={18} color={danger ? theme.danger : iconColor} strokeWidth={2} />
+      <View style={[styles.rowIcon, { backgroundColor: `${finalIconColor}18` }]}>
+        <Icon size={18} color={danger ? theme.danger : finalIconColor} strokeWidth={2} />
       </View>
       <View style={styles.rowText}>
         <Text style={[styles.rowLabel, { color: danger ? theme.danger : theme.text }]}>{label}</Text>
@@ -128,7 +128,7 @@ export const SettingsScreen: React.FC = () => {
 
   const handleShareApp = async () => {
     await Share.share({
-      message: 'Try Qoppy for saving and copying the snippets you reuse every day.',
+      message: 'Try Qoppy for saving and copying the snippets you reuse every day: https://play.google.com/store/apps/details?id=com.qoppy.app',
     });
   };
 
@@ -308,14 +308,14 @@ export const SettingsScreen: React.FC = () => {
       </TouchableOpacity>
 
       <Section title="Usage">
-        <Row icon={Info} iconColor={COLORS.primary} label="Snippets stored" sublabel={`${snippetCount} snippets saved`} />
-        <Row icon={Tag} iconColor={COLORS.secondary} label="Manage categories" onPress={() => navigation.navigate('ManageCategories')} />
+        <Row icon={Info} iconColor={theme.primary} label="Snippets stored" sublabel={`${snippetCount} snippets saved`} />
+        <Row icon={Tag} iconColor={theme.primary} label="Manage categories" onPress={() => navigation.navigate('ManageCategories')} />
       </Section>
 
       <Section title="Account">
         <Row
           icon={CircleUserRound}
-          iconColor={COLORS.primary}
+          iconColor={theme.primary}
           label="Sign in with Google"
           sublabel={
             googleAccount
@@ -325,13 +325,6 @@ export const SettingsScreen: React.FC = () => {
                 : 'Optional for backup and device sync'
           }
           onPress={handleGoogleSignIn}
-        />
-        <Row
-          icon={Cloud}
-          iconColor={COLORS.secondary}
-          label="Backup and sync"
-          sublabel={googleAccount ? 'Google account connected for backup and sync' : 'Sign in with Google to enable backup and sync'}
-          onPress={!googleAccount ? handleGoogleSignIn : undefined}
         />
         <Row
           icon={ShieldAlert}
@@ -345,7 +338,7 @@ export const SettingsScreen: React.FC = () => {
       <Section title="Preferences">
         <Row
           icon={Zap}
-          iconColor={COLORS.success}
+          iconColor={theme.success}
           label="Haptic feedback"
           sublabel="Vibrate on copy"
           right={
@@ -362,7 +355,7 @@ export const SettingsScreen: React.FC = () => {
       <Section title="Support">
         <Row
           icon={Bug}
-          iconColor={COLORS.secondary}
+          iconColor={theme.primary}
           label="Report a Bug or Idea"
           sublabel="Send feedback by email"
           onPress={() => Linking.openURL('mailto:support@qoppy.app?subject=Qoppy%20Bug%20or%20Idea')}
@@ -372,32 +365,15 @@ export const SettingsScreen: React.FC = () => {
       <Section title="Legal">
         <Row
           icon={FileText}
-          iconColor={COLORS.textSecondary}
+          iconColor={theme.textSecondary}
           label="Terms & Conditions"
           onPress={() => Linking.openURL('https://nogeybix.com/legal/terms')}
         />
         <Row
           icon={ExternalLink}
-          iconColor={COLORS.textSecondary}
+          iconColor={theme.textSecondary}
           label="Privacy Policy"
           onPress={() => Linking.openURL('https://nogeybix.com/legal/privacy')}
-        />
-      </Section>
-
-      <Section title="About">
-        <Row
-          icon={Mail}
-          iconColor={COLORS.primary}
-          label="Contact Us"
-          sublabel="support@qoppy.app"
-          onPress={() => Linking.openURL('mailto:support@qoppy.app')}
-        />
-        <Row
-          icon={Star}
-          iconColor={COLORS.secondary}
-          label="Rate the App"
-          sublabel="Enjoying Qoppy?"
-          onPress={() => Linking.openURL('https://apps.apple.com')}
         />
       </Section>
 

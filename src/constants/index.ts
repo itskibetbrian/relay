@@ -1,28 +1,5 @@
 // src/constants/index.ts
 
-export const COLORS = {
-  primary: '#6366F1',       // Indigo
-  primaryLight: '#818CF8',
-  primaryDark: '#4F46E5',
-  secondary: '#F59E0B',     // Amber
-  success: '#10B981',       // Emerald
-  danger: '#EF4444',
-  warning: '#F59E0B',
-
-  background: '#0F0F13',    // Near-black
-  surface: '#1A1A24',       // Dark card bg
-  surfaceElevated: '#22222F',
-  border: '#2E2E3E',
-  borderLight: '#3A3A50',
-
-  text: '#F8F8FF',
-  textSecondary: '#9999B5',
-  textMuted: '#5A5A78',
-
-  white: '#FFFFFF',
-  black: '#000000',
-};
-
 export const CATEGORY_COLORS = [
   '#6366F1', // Indigo
   '#EC4899', // Pink

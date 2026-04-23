@@ -20,6 +20,7 @@ import { CategoryChipBar } from '../components/common/CategoryChipBar';
 import { SearchBar } from '../components/common/SearchBar';
 import { useSnippets } from '../hooks/useSnippets';
 import { useCategories } from '../hooks/useCategories';
+import { useRatingPrompt } from '../hooks/useRatingPrompt';
 import { ANIMATION_DURATION } from '../constants';
 import { textFont } from '../constants/typography';
 import { RootStackParamList, Snippet } from '../types';
@@ -50,6 +51,7 @@ export const HomeScreen: React.FC = () => {
     refresh,
   } = useSnippets();
   const { categories } = useCategories();
+  const { triggerPrompt } = useRatingPrompt();
   const gridSnippets = useMemo(() => padGridItems(snippets, NUM_COLUMNS), [snippets]);
 
   useLayoutEffect(() => {
@@ -57,6 +59,10 @@ export const HomeScreen: React.FC = () => {
       headerTitle: 'Qoppy',
     });
   }, [navigation]);
+
+  React.useEffect(() => {
+    triggerPrompt();
+  }, [triggerPrompt]);
 
   const handleEdit = useCallback((snippet: Snippet) => {
     navigation.navigate('AddSnippet', { snippetId: snippet.id });

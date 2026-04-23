@@ -227,10 +227,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     borderRadius: 28,
     borderWidth: 0,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.16,
-    shadowRadius: 20,
-    elevation: 12,
   },
   tabBarBackdrop: {
     ...StyleSheet.absoluteFillObject,

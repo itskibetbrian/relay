@@ -22,7 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Check, Copy, Heart } from 'lucide-react-native';
 import { Snippet } from '../../types';
-import { COLORS, ANIMATION_DURATION } from '../../constants';
+import { ANIMATION_DURATION } from '../../constants';
 import { textFont } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -102,7 +102,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
   return (
     <Animated.View style={[styles.wrapper, cardAnimStyle]}>
       {/* Glow ring that pulses on copy */}
-      <Animated.View style={[styles.glow, glowStyle]} />
+      <Animated.View style={[styles.glow, glowStyle, { borderColor: theme.success, shadowColor: theme.success }]} />
 
       <AnimatedTouchable
         style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border, shadowColor: theme.shadow }, cardBgStyle]}
@@ -125,7 +125,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
               <View
                 style={[
                   styles.categoryDot,
-                  { backgroundColor: snippet.categoryColor ?? COLORS.primary },
+                  { backgroundColor: snippet.categoryColor ?? theme.primary },
                 ]}
               />
               <Text
@@ -170,8 +170,8 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
           >
             {isCopied ? (
               <>
-                <Check size={11} color={COLORS.success} strokeWidth={2.5} />
-                <Text style={[styles.copyLabel, { color: COLORS.success }]}>
+                <Check size={11} color={theme.success} strokeWidth={2.5} />
+                <Text style={[styles.copyLabel, { color: theme.success }]}>
                   Copied!
                 </Text>
               </>
@@ -213,8 +213,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: COLORS.success,
-    shadowColor: COLORS.success,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 8,
     shadowOpacity: 0.8,
@@ -296,7 +294,6 @@ const styles = StyleSheet.create({
   copyLabel: {
     ...textFont(),
     fontSize: 10,
-    color: COLORS.textMuted,
     fontWeight: '500',
   },
 });
