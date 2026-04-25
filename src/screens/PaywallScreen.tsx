@@ -30,6 +30,7 @@ const BENEFITS = [
 const SUBSCRIPTION_SKUS = {
   monthly: 'com.qoppy.app.premium.monthly',
   yearly: 'com.qoppy.app.premium.yearly',
+  lifetime: 'com.qoppy.app.premium.lifetime',
 } as const;
 
 type PlanKey = keyof typeof SUBSCRIPTION_SKUS;
@@ -42,11 +43,13 @@ interface PlanConfig {
 }
 
 const FALLBACK_PLANS: Record<PlanKey, PlanConfig> = {
-  monthly: { label: 'Monthly', price: '$1.99', period: '/month' },
-  yearly: { label: 'Yearly', price: '$19.99', period: '/year', badge: 'Save 16%' },
+  monthly: { label: 'Monthly', price: '$4.99', period: '/month' },
+  yearly: { label: 'Yearly', price: '$49.99', period: '/year', badge: 'Save 16%' },
+  lifetime: { label: 'Lifetime', price: '$99', period: 'One-time' },
 };
 
-const getPeriodLabel = (billingPeriod?: string | null): string | null => {
+const getPeriodLabel = (billingPeriod?: string | null, planKey?: PlanKey): string | null => {
+  if (planKey === 'lifetime') return 'One-time';
   switch (billingPeriod) {
     case 'P1M':
       return '/month';
@@ -70,7 +73,7 @@ const getPlanFromSubscription = (
   return {
     ...fallback,
     price: phase?.formattedPrice ?? fallback.price,
-    period: getPeriodLabel(phase?.billingPeriod) ?? fallback.period,
+    period: getPeriodLabel(phase?.billingPeriod, fallback.label.toLowerCase() as PlanKey) ?? fallback.period,
   };
 };
 
@@ -158,6 +161,7 @@ export const PaywallScreen: React.FC = () => {
     () => ({
       monthly: getPlanFromSubscription(subscriptionsBySku[SUBSCRIPTION_SKUS.monthly], FALLBACK_PLANS.monthly),
       yearly: getPlanFromSubscription(subscriptionsBySku[SUBSCRIPTION_SKUS.yearly], FALLBACK_PLANS.yearly),
+      lifetime: getPlanFromSubscription(subscriptionsBySku[SUBSCRIPTION_SKUS.lifetime], FALLBACK_PLANS.lifetime),
     }),
     [subscriptionsBySku]
   );
@@ -230,7 +234,7 @@ export const PaywallScreen: React.FC = () => {
       </View>
 
       <View style={styles.toggle}>
-        {(['monthly', 'yearly'] as const).map(key => {
+        {(['monthly', 'yearly', 'lifetime'] as const).map(key => {
           const selectedPlan = plans[key];
           const isActive = plan === key;
           return (
@@ -244,14 +248,15 @@ export const PaywallScreen: React.FC = () => {
               onPress={() => setPlan(key)}
               activeOpacity={0.82}
             >
-              {selectedPlan.badge && (
-                <View style={[styles.badge, { backgroundColor: theme.primary }]}>
+              {key === 'yearly' ? (
+                <View style={[styles.inlineBadge, { backgroundColor: theme.primary }]}>
                   <Text style={[styles.badgeText, { color: theme.onPrimary }]}>{selectedPlan.badge}</Text>
                 </View>
+              ) : (
+                <Text style={[styles.planLabel, { color: isActive ? theme.primary : theme.textSecondary }]}>
+                  {selectedPlan.label}
+                </Text>
               )}
-              <Text style={[styles.planLabel, { color: isActive ? theme.primary : theme.textSecondary }]}>
-                {selectedPlan.label}
-              </Text>
               <Text style={[styles.planPrice, { color: theme.text }]}>{selectedPlan.price}</Text>
               <Text style={[styles.planPeriod, { color: isActive ? theme.primary : theme.textSecondary }]}>
                 {selectedPlan.period}
@@ -307,17 +312,25 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 18,
     borderWidth: 1.5,
-    padding: 18,
+    padding: 12,
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
     position: 'relative',
     overflow: 'hidden',
   },
   badge: { position: 'absolute', top: 10, right: 10, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3 },
-  badgeText: { ...textFont('semibold'), fontSize: 10 },
-  planLabel: { ...textFont('semibold'), fontSize: 14 },
-  planPrice: { ...textFont('bold'), fontSize: 28 },
-  planPeriod: { ...textFont('regular'), fontSize: 13 },
+  inlineBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: { ...textFont('semibold'), fontSize: 11 },
+  planLabel: { ...textFont('semibold'), fontSize: 13, marginBottom: 4 },
+  planPrice: { ...textFont('bold'), fontSize: 20 },
+  planPeriod: { ...textFont('regular'), fontSize: 11 },
   cta: {
     borderRadius: 18,
     padding: 18,

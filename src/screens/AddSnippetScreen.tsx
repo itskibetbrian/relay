@@ -21,6 +21,7 @@ import { useCategories } from '../hooks/useCategories';
 import { RootStackParamList } from '../types';
 import { db } from '../services/database';
 import { useTheme } from '../hooks/useTheme';
+import { textFont } from '../constants/typography';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 type RouteType = RouteProp<RootStackParamList, 'AddSnippet'>;
@@ -183,17 +184,17 @@ export const AddSnippetScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 20, gap: 8 },
-  label: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 12, marginBottom: 6 },
+  label: { fontSize: 13, ...textFont('bold'), textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 12, marginBottom: 6 },
   input: { borderRadius: 14, borderWidth: 1, padding: 14, fontSize: 15 },
   textarea: { minHeight: 120, paddingTop: 14 },
   noticeCard: { borderRadius: 14, borderWidth: 1, padding: 14, marginTop: 4, marginBottom: 8 },
-  noticeTitle: { fontSize: 14, fontWeight: '700', marginBottom: 4 },
+  noticeTitle: { fontSize: 14, ...textFont('bold'), marginBottom: 4 },
   noticeText: { fontSize: 13, lineHeight: 19 },
   categoryRow: { flexDirection: 'row', marginBottom: 8 },
   catChip: { borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8 },
-  catChipText: { fontSize: 13, fontWeight: '600' },
+  catChipText: { fontSize: 13, ...textFont('semibold') },
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 16, padding: 16, marginTop: 24, gap: 10 },
-  saveBtnText: { fontSize: 16, fontWeight: '700' },
+  saveBtnText: { fontSize: 16, ...textFont('bold') },
 });
 
 export default AddSnippetScreen;

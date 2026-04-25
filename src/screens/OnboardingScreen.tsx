@@ -10,10 +10,12 @@ import {
 import Animated, { FadeInRight, FadeOutLeft } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Check } from 'lucide-react-native';
 import { db } from '../services/database';
 import { RootStackParamList } from '../types';
 import { useTheme } from '../hooks/useTheme';
 import { ANIMATION_DURATION } from '../constants';
+import { textFont } from '../constants/typography';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -21,6 +23,7 @@ export const OnboardingScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
   const { theme } = useTheme();
   const [step, setStep] = useState(0);
+  const [acceptedToS, setAcceptedToS] = useState(false);
 
   const steps = [
     {
@@ -42,15 +45,15 @@ export const OnboardingScreen: React.FC = () => {
       ),
     },
     {
-      title: 'Security and legal notice',
-      subtitle: 'Qoppy is built for convenient snippets, not sensitive credentials.',
-      accent: theme.danger,
+      title: 'Terms of Service',
+      subtitle: 'By using Qoppy, you agree to our terms of service and privacy policy.',
+      accent: theme.primary,
       body: (
         <View style={styles.guideList}>
-          <Text style={[styles.guideLine, { color: theme.text }]}>This app uses local-first storage. Your snippets stay on your device unless you upgrade to cloud backup.</Text>
-          <Text style={[styles.guideLine, { color: theme.text }]}>Do not store passwords, full credit card numbers, or government ID PINs.</Text>
-          <Text style={[styles.guideLine, { color: theme.text }]}>The app is not designed for storing sensitive authentication credentials.</Text>
-          <Text style={[styles.guideLine, { color: theme.text }]}>For GDPR: no clipboard content is sent to external servers on the free plan.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>1. Use the app for storing non-sensitive snippets only.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>2. Your data is stored locally. Cloud sync requires a premium subscription.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>3. We do not sell your personal data or clipboard content.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>4. You can export or delete your data at any time from Settings.</Text>
         </View>
       ),
     },
@@ -61,12 +64,17 @@ export const OnboardingScreen: React.FC = () => {
 
   const handleNext = async () => {
     if (isLast) {
+      if (!acceptedToS) return;
       await db.setPreference('onboarded', 'true');
       navigation.replace('Main');
       return;
     }
 
     setStep(prev => prev + 1);
+  };
+
+  const handleSkip = () => {
+    setStep(steps.length - 1);
   };
 
   return (
@@ -81,6 +89,19 @@ export const OnboardingScreen: React.FC = () => {
         <Text style={[styles.title, { color: theme.text }]}>{current.title}</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{current.subtitle}</Text>
         {current.body}
+
+        {isLast && (
+          <TouchableOpacity
+            style={styles.tosRow}
+            onPress={() => setAcceptedToS(!acceptedToS)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.checkbox, { borderColor: theme.border }, acceptedToS && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
+              {acceptedToS && <Check size={14} color={theme.onPrimary} strokeWidth={3} />}
+            </View>
+            <Text style={[styles.tosText, { color: theme.text }]}>I accept the Terms of Service</Text>
+          </TouchableOpacity>
+        )}
       </Animated.View>
 
       <View style={styles.dots}>
@@ -99,15 +120,16 @@ export const OnboardingScreen: React.FC = () => {
       </View>
 
       <TouchableOpacity
-        style={[styles.btn, { backgroundColor: current.accent }]}
+        style={[styles.btn, { backgroundColor: current.accent }, isLast && !acceptedToS && { opacity: 0.5 }]}
         onPress={handleNext}
+        disabled={isLast && !acceptedToS}
         activeOpacity={0.85}
       >
         <Text style={[styles.btnText, { color: theme.onPrimary }]}>{isLast ? 'Get Started' : 'Next'}</Text>
       </TouchableOpacity>
 
       {!isLast && (
-        <TouchableOpacity onPress={handleNext} style={styles.skip}>
+        <TouchableOpacity onPress={handleSkip} style={styles.skip}>
           <Text style={[styles.skipText, { color: theme.textSecondary }]}>Skip</Text>
         </TouchableOpacity>
       )}
@@ -137,7 +159,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    fontWeight: '800',
+    ...textFont('extrabold'),
     marginBottom: 12,
     lineHeight: 32,
   },
@@ -171,13 +193,34 @@ const styles = StyleSheet.create({
   },
   btnText: {
     fontSize: 17,
-    fontWeight: '700',
+    ...textFont('bold'),
   },
   skip: {
     padding: 8,
   },
   skipText: {
     fontSize: 15,
+  },
+  tosRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#00000010',
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tosText: {
+    fontSize: 15,
+    ...textFont('medium'),
   },
 });
 

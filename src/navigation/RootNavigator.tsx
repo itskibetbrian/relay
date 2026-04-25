@@ -16,6 +16,7 @@ import MainTabNavigator from './MainTabNavigator';
 import { SnippetsProvider } from '../hooks/useSnippets';
 import { useTheme } from '../hooks/useTheme';
 import { syncPremiumStatusFromBilling, watchPremiumStatusFromBilling } from '../services/premiumSync';
+import { textFont } from '../constants/typography';
 
 // Ignore specific warnings if necessary
 LogBox.ignoreLogs(['Non-serializable values were found in the navigation state']);
@@ -93,7 +94,7 @@ export const RootNavigator: React.FC = () => {
             headerStyle: { backgroundColor: theme.header },
             headerTintColor: theme.text,
             headerShadowVisible: false,
-            headerTitleStyle: { fontWeight: '700', fontSize: 17, color: theme.text },
+            headerTitleStyle: { ...textFont('bold'), fontSize: 17, color: theme.text },
             contentStyle: { backgroundColor: theme.background },
             animation: 'fade',
             animationDuration: 250,
@@ -146,7 +147,7 @@ const splashStyles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: '900',
+    ...textFont('black'),
     letterSpacing: 1.2,
   },
 });

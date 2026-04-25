@@ -43,6 +43,7 @@ import { useCategories } from '../hooks/useCategories';
 import { Category } from '../types';
 import { CATEGORY_COLORS, ANIMATION_DURATION } from '../constants';
 import { useTheme } from '../hooks/useTheme';
+import { textFont } from '../constants/typography';
 
 // ── Icon catalogue ─────────────────────────────────────────────────────────
 
@@ -311,15 +312,15 @@ export const ManageCategoriesScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { padding: 16, paddingBottom: 100 },
-  sectionHeader: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 },
+  sectionHeader: { fontSize: 12, ...textFont('bold'), textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 },
   row: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 10, gap: 12 },
   iconCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  rowName: { flex: 1, fontSize: 15, fontWeight: '600' },
+  rowName: { flex: 1, fontSize: 15, ...textFont('semibold') },
   colorSwatch: { width: 12, height: 12, borderRadius: 6 },
   rowBtn: { padding: 4 },
   empty: { alignItems: 'center', paddingTop: 80, gap: 12 },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 20, fontWeight: '700' },
+  emptyTitle: { fontSize: 20, ...textFont('bold') },
   emptySubtitle: { fontSize: 14 },
   fab: { position: 'absolute', right: 24, width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 },
 });
@@ -328,11 +329,11 @@ const modal = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: '90%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  title: { fontSize: 18, fontWeight: '800' },
+  title: { fontSize: 18, ...textFont('extrabold') },
   preview: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1.5, padding: 16, marginBottom: 20, gap: 14 },
   previewIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  previewName: { fontSize: 17, fontWeight: '700' },
-  label: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, marginTop: 4 },
+  previewName: { fontSize: 17, ...textFont('bold') },
+  label: { fontSize: 12, ...textFont('bold'), textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, marginTop: 4 },
   input: { borderRadius: 12, borderWidth: 1, padding: 14, fontSize: 15, marginBottom: 16 },
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
   colorDot: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
@@ -341,7 +342,7 @@ const modal = StyleSheet.create({
   iconBtn: { width: 44, height: 44, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 16, padding: 16, gap: 10, marginTop: 4 },
   saveBtnDisabled: { opacity: 0.4 },
-  saveBtnText: { fontSize: 16, fontWeight: '700' },
+  saveBtnText: { fontSize: 16, ...textFont('bold') },
 });
 
 export default ManageCategoriesScreen;

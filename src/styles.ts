@@ -4,6 +4,7 @@
 
 import { StyleSheet } from 'react-native';
 import { AppThemePalette } from './hooks/useTheme';
+import { textFont } from './constants/typography';
 
 export const createAppStyles = (theme: AppThemePalette) =>
   StyleSheet.create({
@@ -24,7 +25,7 @@ export const createAppStyles = (theme: AppThemePalette) =>
     },
     lockTitle: {
       fontSize: 28,
-      fontWeight: 'bold',
+      ...textFont('bold'),
       color: theme.text,
       marginBottom: 8,
     },
@@ -75,7 +76,7 @@ export const createAppStyles = (theme: AppThemePalette) =>
     },
     authOptionTitle: {
       fontSize: 15,
-      fontWeight: '700',
+      ...textFont('bold'),
       color: theme.text,
       marginBottom: 4,
     },
@@ -104,7 +105,7 @@ export const createAppStyles = (theme: AppThemePalette) =>
     },
     unlockButtonText: {
       fontSize: 16,
-      fontWeight: '600',
+      ...textFont('semibold'),
       color: theme.onPrimary,
     },
     biometricButton: {
@@ -119,7 +120,7 @@ export const createAppStyles = (theme: AppThemePalette) =>
     },
     biometricButtonText: {
       fontSize: 16,
-      fontWeight: '600',
+      ...textFont('semibold'),
       color: theme.primary,
     },
     disabledButton: {
@@ -136,7 +137,7 @@ export const createAppStyles = (theme: AppThemePalette) =>
     },
     setupTitle: {
       fontSize: 28,
-      fontWeight: 'bold',
+      ...textFont('bold'),
       color: theme.text,
       marginBottom: 8,
     },
@@ -157,7 +158,7 @@ export const createAppStyles = (theme: AppThemePalette) =>
     },
     setupButtonText: {
       fontSize: 16,
-      fontWeight: '600',
+      ...textFont('semibold'),
       color: theme.onPrimary,
     },
     skip: {
@@ -167,7 +168,7 @@ export const createAppStyles = (theme: AppThemePalette) =>
     skipText: {
       fontSize: 15,
       color: theme.textSecondary,
-      fontWeight: '500',
+      ...textFont('medium'),
     },
     biometricToggle: {
       flexDirection: 'row',
@@ -192,7 +193,7 @@ export const createAppStyles = (theme: AppThemePalette) =>
     },
     helperTitle: {
       fontSize: 16,
-      fontWeight: '700',
+      ...textFont('bold'),
       color: theme.text,
       marginBottom: 6,
     },
