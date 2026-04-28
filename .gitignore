@@ -23,3 +23,33 @@ ios/build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Keystores & Secrets
+*.jks
+*.keystore
+*.p12
+*.key
+*.pem
+google-services.json
+GoogleService-Info.plist
+
+# Android
+android/local.properties
+*.ap_
+*.dex
+
+# iOS
+ios/Pods/
+*.moved-aside
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+
+# TypeScript
+*.tsbuildinfo
