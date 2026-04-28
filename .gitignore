@@ -25,6 +25,7 @@ ios/build/
 Thumbs.db
 
 # Keystores & Secrets
+keystore.properties
 *.jks
 *.keystore
 *.p12
