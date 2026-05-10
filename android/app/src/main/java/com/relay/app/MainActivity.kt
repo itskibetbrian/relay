@@ -1,4 +1,4 @@
-package com.qoppy.app
+package com.relay.app
 
 import android.os.Build
 import android.os.Bundle

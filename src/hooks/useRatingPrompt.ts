@@ -11,7 +11,7 @@ export const useRatingPrompt = () => {
       }
 
       if (!force) {
-        const usageCount = await db.getPreference('total_usage_count', '0');
+        const usageCount = (await db.getPreference('total_usage_count', '0')) ?? '0';
         if (parseInt(usageCount, 10) < 20) {
           return;
         }
@@ -29,8 +29,8 @@ export const useRatingPrompt = () => {
       }
 
       Alert.alert(
-        'Enjoying Qoppy?',
-        'If you find Qoppy helpful, please take a moment to rate us. It really helps us out!',
+        'Enjoying Relay?',
+        'If you find Relay helpful, please take a moment to rate us. It really helps us out!',
         [
           {
             text: 'No Thanks',
@@ -51,7 +51,7 @@ export const useRatingPrompt = () => {
             onPress: async () => {
               await db.setPreference('rating_status', 'rated');
               const url = Platform.OS === 'android' 
-                ? 'https://play.google.com/store/apps/details?id=com.qoppy.app'
+                ? 'https://play.google.com/store/apps/details?id=com.relay.app'
                 : 'https://apps.apple.com';
               Linking.openURL(url).catch(() => {
                 Alert.alert('Error', 'Could not open the store page.');
@@ -66,7 +66,7 @@ export const useRatingPrompt = () => {
   }, []);
 
   const incrementUsage = useCallback(async () => {
-    const current = await db.getPreference('total_usage_count', '0');
+    const current = (await db.getPreference('total_usage_count', '0')) ?? '0';
     const next = parseInt(current, 10) + 1;
     await db.setPreference('total_usage_count', next.toString());
     

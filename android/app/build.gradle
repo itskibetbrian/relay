@@ -99,9 +99,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.qoppy.app'
+    namespace 'com.relay.app'
     defaultConfig {
-        applicationId 'com.qoppy.app'
+        applicationId 'com.relay.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

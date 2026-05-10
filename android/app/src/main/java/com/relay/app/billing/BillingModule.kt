@@ -1,4 +1,4 @@
-package com.qoppy.app.billing
+package com.relay.app.billing
 
 import android.app.Activity
 import com.facebook.react.bridge.Arguments

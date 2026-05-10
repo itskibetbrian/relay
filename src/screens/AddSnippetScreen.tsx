@@ -6,6 +6,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
@@ -40,12 +41,14 @@ export const AddSnippetScreen: React.FC = () => {
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('other');
   const [isSaving, setIsSaving] = useState(false);
+  const [titleError, setTitleError] = useState('');
+  const [contentError, setContentError] = useState('');
 
   const normalizedContent = content.replace(/[\s-]/g, '');
   const hasCardNumber = /\b\d{13,19}\b/.test(normalizedContent);
   const hasSensitiveCredentialHint = /(password|passcode|otp|2fa|secret|api key|token)/i.test(content);
 
-  // Load existing snippet for editing
+  // Load existing message for editing.
   useEffect(() => {
     if (snippetId) {
       db.getSnippetById(snippetId).then(s => {
@@ -60,7 +63,7 @@ export const AddSnippetScreen: React.FC = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: isEditing ? 'Edit Snippet' : 'New Snippet',
+      title: isEditing ? 'Edit Message' : 'New Message',
       headerRight: isEditing
         ? () => (
             <TouchableOpacity onPress={handleDelete} style={{ padding: 8 }}>
@@ -72,12 +75,30 @@ export const AddSnippetScreen: React.FC = () => {
   }, [isEditing, navigation, theme.danger]);
 
   const handleSave = async () => {
-    if (!title.trim() || !content.trim()) {
-      Alert.alert('Missing fields', 'Please fill in both title and content.');
+    const isTitleMissing = !title.trim();
+    const isContentMissing = !content.trim();
+
+    setTitleError('');
+    setContentError('');
+
+    if (isTitleMissing && isContentMissing) {
+      setTitleError('Please add a title and message before saving');
+      setContentError('Please add a title and message before saving');
       return;
     }
+
+    if (isTitleMissing) {
+      setTitleError('Please add a title before saving');
+      return;
+    }
+
+    if (isContentMissing) {
+      setContentError('Please add a message before saving');
+      return;
+    }
+
     if (hasCardNumber) {
-      Alert.alert('Sensitive data blocked', 'Do not store full credit card numbers in Qoppy.');
+      Alert.alert('Sensitive data blocked', 'Do not store full credit card numbers in Relay.');
       return;
     }
     setIsSaving(true);
@@ -90,8 +111,8 @@ export const AddSnippetScreen: React.FC = () => {
       navigation.goBack();
     } catch (error: any) {
       Alert.alert(
-        'Unable to save snippet',
-        error?.message ?? 'You need to subscribe to Premium to add more snippets.'
+        'Unable to save message',
+        error?.message ?? 'Please try saving this message again.'
       );
     } finally {
       setIsSaving(false);
@@ -99,7 +120,7 @@ export const AddSnippetScreen: React.FC = () => {
   };
 
   const handleDelete = () => {
-    Alert.alert('Delete Snippet', 'Are you sure?', [
+    Alert.alert('Delete Message', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -124,22 +145,38 @@ export const AddSnippetScreen: React.FC = () => {
         <TextInput
           style={[styles.input, { backgroundColor: theme.surfaceAlt, borderColor: theme.border, color: theme.text }]}
           value={title}
-          onChangeText={setTitle}
-          placeholder="e.g. Adresse Domicile"
+          onChangeText={value => {
+            setTitle(value);
+            if (titleError) setTitleError('');
+          }}
+          placeholder="e.g. Price List"
           placeholderTextColor={theme.textMuted}
           maxLength={60}
         />
+        {titleError ? <Text style={[styles.errorText, { color: theme.danger }]}>{titleError}</Text> : null}
+        <Text style={[styles.helperText, { color: theme.textMuted }]}>
+          This is how your message appears in your library
+        </Text>
+
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
         <Text style={[styles.label, { color: theme.textSecondary }]}>Content</Text>
         <TextInput
           style={[styles.input, styles.textarea, { backgroundColor: theme.surfaceAlt, borderColor: theme.border, color: theme.text }]}
           value={content}
-          onChangeText={setContent}
-          placeholder="Paste or type the text you want to copy…"
+          onChangeText={value => {
+            setContent(value);
+            if (contentError) setContentError('');
+          }}
+          placeholder="Paste or type the text you want to send..."
           placeholderTextColor={theme.textMuted}
           multiline
           textAlignVertical="top"
         />
+        {contentError ? <Text style={[styles.errorText, { color: theme.danger }]}>{contentError}</Text> : null}
+        <Text style={[styles.counterText, { color: theme.textMuted }]}>
+          {content.length} characters
+        </Text>
         {(hasCardNumber || hasSensitiveCredentialHint) && (
           <View style={[styles.noticeCard, { backgroundColor: theme.surface, borderColor: hasCardNumber ? theme.danger : theme.border }]}>
             <Text style={[styles.noticeTitle, { color: hasCardNumber ? theme.danger : theme.text }]}>
@@ -147,34 +184,42 @@ export const AddSnippetScreen: React.FC = () => {
             </Text>
             <Text style={[styles.noticeText, { color: theme.textSecondary }]}>
               {hasCardNumber
-                ? 'Qoppy should not be used to store full card numbers.'
+                ? 'Relay should not be used to store full card numbers.'
                 : 'Avoid storing passwords, authentication codes, or similar secrets in this app.'}
             </Text>
           </View>
         )}
 
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
+
         <Text style={[styles.label, { color: theme.textSecondary }]}>Category</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryRow}>
           {categories.map(cat => (
-            <TouchableOpacity
+            <Pressable
               key={cat.id}
-              style={[
+              style={({ pressed }) => [
                 styles.catChip,
-                { borderColor: cat.color, backgroundColor: theme.surfaceAlt },
-                selectedCategory === cat.id && { backgroundColor: cat.color },
+                selectedCategory === cat.id
+                  ? { backgroundColor: theme.primary, borderColor: theme.primary }
+                  : {
+                      borderColor: pressed ? cat.color : theme.border,
+                      backgroundColor: pressed ? theme.surface : theme.surfaceAlt,
+                    },
+                pressed && selectedCategory !== cat.id && styles.catChipPressed,
               ]}
               onPress={() => setSelectedCategory(cat.id)}
             >
+              {selectedCategory === cat.id && <View style={[styles.activeDot, { backgroundColor: theme.onPrimary }]} />}
               <Text style={[styles.catChipText, { color: selectedCategory === cat.id ? theme.onPrimary : cat.color }]}>
                 {cat.name}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </ScrollView>
 
         <TouchableOpacity style={[styles.saveBtn, { backgroundColor: theme.primary }]} onPress={handleSave} disabled={isSaving}>
           <Save size={18} color={theme.onPrimary} />
-          <Text style={[styles.saveBtnText, { color: theme.onPrimary }]}>{isSaving ? 'Saving…' : isEditing ? 'Update Snippet' : 'Save Snippet'}</Text>
+          <Text style={[styles.saveBtnText, { color: theme.onPrimary }]}>{isSaving ? 'Saving...' : isEditing ? 'Update Message' : 'Save Message'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -187,12 +232,18 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, ...textFont('bold'), textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 12, marginBottom: 6 },
   input: { borderRadius: 14, borderWidth: 1, padding: 14, fontSize: 15 },
   textarea: { minHeight: 120, paddingTop: 14 },
+  helperText: { fontSize: 12, ...textFont('regular'), lineHeight: 17, marginTop: 2 },
+  errorText: { fontSize: 12, ...textFont('medium'), lineHeight: 17, marginTop: 2 },
+  counterText: { fontSize: 12, ...textFont('regular'), textAlign: 'right', lineHeight: 17, marginTop: 2 },
+  divider: { height: StyleSheet.hairlineWidth, marginTop: 14, marginBottom: 4 },
   noticeCard: { borderRadius: 14, borderWidth: 1, padding: 14, marginTop: 4, marginBottom: 8 },
   noticeTitle: { fontSize: 14, ...textFont('bold'), marginBottom: 4 },
   noticeText: { fontSize: 13, lineHeight: 19 },
   categoryRow: { flexDirection: 'row', marginBottom: 8 },
-  catChip: { borderRadius: 20, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8 },
-  catChipText: { fontSize: 13, ...textFont('semibold') },
+  catChip: { flexDirection: 'row', alignItems: 'center', borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 6, marginRight: 6, gap: 5 },
+  catChipPressed: { opacity: 0.92 },
+  activeDot: { width: 6, height: 6, borderRadius: 3, opacity: 0.8 },
+  catChipText: { fontSize: 12, letterSpacing: 0.2, ...textFont('medium') },
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: 16, padding: 16, marginTop: 24, gap: 10 },
   saveBtnText: { fontSize: 16, ...textFont('bold') },
 });

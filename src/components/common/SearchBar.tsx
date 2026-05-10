@@ -20,7 +20,7 @@ interface SearchBarProps {
 export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
-  placeholder = 'Search snippets…',
+  placeholder = 'Search messages...',
 }) => {
   const { theme } = useTheme();
 

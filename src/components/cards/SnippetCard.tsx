@@ -1,6 +1,6 @@
 // src/components/cards/SnippetCard.tsx
 //
-// The core interactive card. Tap = copy. Long-press = context menu.
+// The core interactive card. Tap = share. Long-press = context menu.
 // Uses Reanimated for smooth press/copy feedback animations.
 
 import React, { useCallback } from 'react';
@@ -8,42 +8,59 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   Platform,
-  Share,
+  GestureResponderEvent,
 } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withSequence,
   withTiming,
   interpolateColor,
   runOnJS,
 } from 'react-native-reanimated';
-import { Check, Copy, Heart, Share2 } from 'lucide-react-native';
+import { Check, Copy, Heart } from 'lucide-react-native';
 import { Snippet } from '../../types';
 import { ANIMATION_DURATION } from '../../constants';
 import { textFont } from '../../constants/typography';
 import { useTheme } from '../../hooks/useTheme';
 
 const CARD_GAP = 8;
+const PREVIEW_CHARACTER_LIMIT = 96;
+
+const getWordBoundaryPreview = (content: string) => {
+  const normalized = content.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= PREVIEW_CHARACTER_LIMIT) {
+    return normalized;
+  }
+
+  const clipped = normalized.slice(0, PREVIEW_CHARACTER_LIMIT);
+  const lastSpace = clipped.lastIndexOf(' ');
+
+  // Native two-line text measurement depends on device width/font rendering;
+  // pre-clipping at a word boundary prevents obvious mid-word preview endings.
+  return `${(lastSpace > 0 ? clipped.slice(0, lastSpace) : clipped).trim()}...`;
+};
 
 interface SnippetCardProps {
   snippet: Snippet;
   isCopied: boolean;
   onCopy: (snippet: Snippet) => void;
+  onShare: (snippet: Snippet) => void;
   onFavorite: (id: string) => void;
   onEdit: (snippet: Snippet) => void;
   onDelete: (id: string) => void;
 }
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const SnippetCard: React.FC<SnippetCardProps> = ({
   snippet,
   isCopied,
   onCopy,
+  onShare,
   onFavorite,
   onEdit,
   onDelete,
@@ -52,6 +69,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
   const scale = useSharedValue(1);
   const glowOpacity = useSharedValue(0);
   const copyProgress = useSharedValue(0);
+  const previewContent = getWordBoundaryPreview(snippet.content);
 
   // ── Animation styles ────────────────────────────────────────────────────
 
@@ -74,14 +92,15 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
   // ── Handlers ────────────────────────────────────────────────────────────
 
   const handlePressIn = useCallback(() => {
-    scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
+    scale.value = withTiming(0.97, { duration: 100 });
   }, []);
 
   const handlePressOut = useCallback(() => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    scale.value = withTiming(1, { duration: 100 });
   }, []);
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = useCallback((event?: GestureResponderEvent) => {
+    event?.stopPropagation?.();
     // Trigger copy feedback animation
     copyProgress.value = withSequence(
       withTiming(1, { duration: ANIMATION_DURATION.fast }),
@@ -94,20 +113,14 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
     runOnJS(onCopy)(snippet);
   }, [snippet, onCopy]);
 
-  const handleFavorite = useCallback(() => {
+  const handleFavorite = useCallback((event?: GestureResponderEvent) => {
+    event?.stopPropagation?.();
     onFavorite(snippet.id);
   }, [snippet.id, onFavorite]);
 
-  const handleShare = useCallback(async () => {
-    try {
-      await Share.share({
-        message: snippet.content,
-        title: snippet.title,
-      });
-    } catch (error) {
-      console.error('Error sharing snippet:', error);
-    }
-  }, [snippet.content, snippet.title]);
+  const handleShare = useCallback(() => {
+    onShare(snippet);
+  }, [onShare, snippet]);
 
   // ── Render ──────────────────────────────────────────────────────────────
 
@@ -116,13 +129,12 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
       {/* Glow ring that pulses on copy */}
       <Animated.View style={[styles.glow, glowStyle, { borderColor: theme.success, shadowColor: theme.success }]} />
 
-      <AnimatedTouchable
+      <AnimatedPressable
         style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border, shadowColor: theme.shadow }, cardBgStyle]}
-        onPress={handleCopy}
+        onPress={handleShare}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onLongPress={() => onEdit(snippet)}
-        activeOpacity={1}
         delayLongPress={400}
       >
         <View style={styles.contentWrap}>
@@ -167,42 +179,38 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
             numberOfLines={2}
             ellipsizeMode="tail"
           >
-            {snippet.content}
+            {previewContent}
           </Text>
         </View>
 
         {/* Footer row */}
         <View style={styles.footer}>
-          {/* Copy / Copied indicator */}
-          <View
-            style={[
-              styles.copyBadge,
-              { backgroundColor: isCopied ? theme.successSoft : theme.surfaceAlt },
-            ]}
-          >
-            {isCopied ? (
+          {isCopied ? (
+            <View
+              style={[
+                styles.copyBadge,
+                { backgroundColor: theme.successSoft },
+              ]}
+            >
               <>
                 <Check size={11} color={theme.success} strokeWidth={2.5} />
                 <Text style={[styles.copyLabel, { color: theme.success }]}>
                   Copied!
                 </Text>
               </>
-            ) : (
-              <>
-                <Copy size={11} color={theme.textMuted} strokeWidth={2} />
-                <Text style={[styles.copyLabel, { color: theme.textMuted }]}>Tap to copy</Text>
-              </>
-            )}
-          </View>
+            </View>
+          ) : (
+            <View style={styles.copyBadgeSpacer} />
+          )}
 
           <View style={styles.actions}>
-            {/* Share button */}
+            {/* Copy button */}
             <TouchableOpacity
-              onPress={handleShare}
+              onPress={handleCopy}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               activeOpacity={0.7}
             >
-              <Share2
+              <Copy
                 size={16}
                 color={theme.textMuted}
                 strokeWidth={2}
@@ -224,7 +232,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
             </TouchableOpacity>
           </View>
         </View>
-      </AnimatedTouchable>
+      </AnimatedPressable>
     </Animated.View>
   );
 };
@@ -321,6 +329,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 3,
+  },
+  copyBadgeSpacer: {
+    minWidth: 1,
   },
   copyLabel: {
     ...textFont('regular'),

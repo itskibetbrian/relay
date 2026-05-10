@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Qoppy",
-    "slug": "qoppy",
+    "name": "Relay",
+    "slug": "relay",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#EDE9F6",
-    "scheme": "qoppy",
+    "scheme": "relay",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
@@ -16,7 +16,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.qoppy.app",
+      "bundleIdentifier": "com.relay.app",
       "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Not used.",
@@ -29,20 +29,13 @@
         "backgroundColor": "#0F0F13"
       },
       "backgroundColor": "#EDE9F6",
-      "package": "com.qoppy.app",
+      "package": "com.relay.app",
       "versionCode": 1,
       "permissions": []
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [],
-    "extra": {
-      "googleAuth": {
-        "androidClientId": "",
-        "iosClientId": "",
-        "webClientId": ""
-      }
-    }
+    "plugins": []
   }
 }

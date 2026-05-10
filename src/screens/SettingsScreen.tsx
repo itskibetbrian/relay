@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -14,37 +14,22 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import {
-  CircleUserRound,
   Crown,
   Tag,
   ExternalLink,
-  Star,
   ChevronRight,
   Info,
   Zap,
   FileText,
-  Mail,
   Share2,
   Bug,
-  Cloud,
-  ShieldAlert,
+  Trash2,
 } from 'lucide-react-native';
 import { db } from '../services/database';
 import { textFont } from '../constants/typography';
 import { RootStackParamList } from '../types';
 import { useTheme } from '../hooks/useTheme';
 import { useSnippets } from '../hooks/useSnippets';
-import * as AuthSession from 'expo-auth-session';
-import {
-  buildGoogleAuthRequestConfig,
-  clearGoogleAccount,
-  GOOGLE_DISCOVERY,
-  GoogleAccount,
-  isGoogleAuthConfigured,
-  loadGoogleAccount,
-  normalizeGoogleUser,
-  saveGoogleAccount,
-} from '../services/googleAuth';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -95,31 +80,15 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
   const { theme } = useTheme();
-  const { deleteAllSnippets } = useSnippets();
+  const { isPremium, refresh, refreshShareUsage } = useSnippets();
   const [snippetCount, setSnippetCount] = useState(0);
   const [hapticEnabled, setHapticEnabled] = useState(true);
-  const [googleAccount, setGoogleAccount] = useState<GoogleAccount | null>(null);
-  const [isGoogleBusy, setIsGoogleBusy] = useState(false);
-
-  const googleAuthConfig = useMemo(() => buildGoogleAuthRequestConfig(), []);
-  const authRequestConfig = useMemo<AuthSession.AuthRequestConfig>(() => {
-    return (
-      googleAuthConfig ?? {
-        clientId: 'google-client-id-required',
-        redirectUri: AuthSession.makeRedirectUri({ scheme: 'qoppy', path: 'oauth' }),
-        responseType: AuthSession.ResponseType.Code,
-        scopes: ['openid', 'profile', 'email'],
-        usePKCE: true,
-      }
-    );
-  }, [googleAuthConfig]);
-  const [request, response, promptAsync] = AuthSession.useAuthRequest(authRequestConfig, GOOGLE_DISCOVERY);
 
   const loadUsage = useCallback(() => {
     db.getSnippetCount().then(setSnippetCount);
     db.getPreference('haptic', 'true').then(v => setHapticEnabled(v === 'true'));
-    loadGoogleAccount().then(setGoogleAccount);
-  }, []);
+    void refreshShareUsage();
+  }, [refreshShareUsage]);
 
   useFocusEffect(
     useCallback(() => {
@@ -129,7 +98,7 @@ export const SettingsScreen: React.FC = () => {
 
   const handleShareApp = async () => {
     await Share.share({
-      message: 'Try Qoppy for saving and copying the snippets you reuse every day: https://play.google.com/store/apps/details?id=com.qoppy.app',
+      message: 'Try Relay for saving and sending the messages you reuse every day: https://play.google.com/store/apps/details?id=com.relay.app',
     });
   };
 
@@ -141,139 +110,24 @@ export const SettingsScreen: React.FC = () => {
     await db.setPreference('haptic', value ? 'true' : 'false');
   };
 
-  useEffect(() => {
-    if (!response) {
-      return;
-    }
-
-    if (response.type === 'dismiss' || response.type === 'cancel') {
-      setIsGoogleBusy(false);
-      return;
-    }
-
-    if (response.type === 'error') {
-      setIsGoogleBusy(false);
-      Alert.alert('Google sign-in failed', response.error?.message ?? 'Unable to complete the Google sign-in flow.');
-      return;
-    }
-
-    if (response.type !== 'success') {
-      return;
-    }
-
-    const code = response.params.code;
-    if (!googleAuthConfig || !code || !request?.codeVerifier) {
-      setIsGoogleBusy(false);
-      Alert.alert('Google sign-in failed', 'Google sign-in could not finish because the authorization response was incomplete.');
-      return;
-    }
-
-    let isMounted = true;
-
-    (async () => {
-      try {
-        const tokenResponse = await AuthSession.exchangeCodeAsync(
-          {
-            clientId: googleAuthConfig.clientId,
-            code,
-            redirectUri: authRequestConfig.redirectUri,
-            extraParams: {
-              code_verifier: request.codeVerifier ?? '',
-            },
-          },
-          GOOGLE_DISCOVERY
-        );
-
-        const userInfo = await AuthSession.fetchUserInfoAsync(
-          {
-            accessToken: tokenResponse.accessToken,
-          },
-          GOOGLE_DISCOVERY
-        );
-
-        const account = normalizeGoogleUser(userInfo);
-        if (!account.email) {
-          throw new Error('Google did not return an email address for this account.');
-        }
-
-        await saveGoogleAccount(account, tokenResponse);
-
-        if (isMounted) {
-          setGoogleAccount(account);
-          Alert.alert('Google connected', account.email);
-        }
-      } catch (error: any) {
-        if (isMounted) {
-          Alert.alert('Google sign-in failed', error?.message ?? 'Unable to connect your Google account right now.');
-        }
-      } finally {
-        if (isMounted) {
-          setIsGoogleBusy(false);
-        }
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [authRequestConfig.redirectUri, googleAuthConfig, request, response]);
-
-  const handleGoogleSignIn = useCallback(async () => {
-    if (!isGoogleAuthConfigured() || !googleAuthConfig) {
-      Alert.alert(
-        'Google OAuth not configured',
-        'Add your Google OAuth client ID to `expo.extra.googleAuth.androidClientId` in app.json, rebuild the app, and then try again.'
-      );
-      return;
-    }
-
-    if (!request) {
-      Alert.alert('Google sign-in not ready', 'The Google sign-in request is still loading. Please try again in a moment.');
-      return;
-    }
-
-    setIsGoogleBusy(true);
-    const result = await promptAsync();
-
-    if (result.type !== 'opened' && result.type !== 'locked') {
-      setIsGoogleBusy(false);
-    }
-  }, [googleAuthConfig, promptAsync, request]);
-
-  const handleClearAll = () => {
+  const handleClearAllData = () => {
     Alert.alert(
-      'Clear all snippets?',
-      'This will permanently delete all your snippets. Categories are kept.',
+      'Clear all data?',
+      'This will permanently delete all your messages, categories, favorites, and reset the app to its original state. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete all',
+          text: 'Clear everything',
           style: 'destructive',
           onPress: async () => {
-            await deleteAllSnippets();
+            await db.clearAllData();
+            await refresh();
+            await refreshShareUsage();
             setSnippetCount(0);
-            Alert.alert('Done', 'All snippets deleted.');
-          },
-        },
-      ]
-    );
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete account data?',
-      'This will remove all local snippets and clear any saved account-related preferences on this device.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete account',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteAllSnippets();
-            await clearGoogleAccount();
-            setSnippetCount(0);
-            setGoogleAccount(null);
-            Alert.alert('Deleted', 'Local account data has been removed from this device.');
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Onboarding' }],
+            });
           },
         },
       ]
@@ -282,19 +136,21 @@ export const SettingsScreen: React.FC = () => {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
-      <TouchableOpacity
-        style={[styles.premiumHero, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
-        onPress={() => navigation.navigate('Paywall', { source: 'settings' })}
-        activeOpacity={0.88}
-      >
-        <View style={styles.premiumHeader}>
-          <Crown size={26} color={theme.onPrimary} />
-          <Text style={[styles.premiumTitle, { color: theme.onPrimary }]}>Go Premium</Text>
-        </View>
-        <Text style={[styles.premiumSub, { color: `${theme.onPrimary}DD` }]}>
-          Unlock unlimited snippets, backup, and device sync.
-        </Text>
-      </TouchableOpacity>
+      {!isPremium && (
+        <TouchableOpacity
+          style={[styles.premiumHero, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
+          onPress={() => navigation.navigate('Paywall', { source: 'settings' })}
+          activeOpacity={0.88}
+        >
+          <View style={styles.premiumHeader}>
+            <Crown size={26} color={theme.onPrimary} />
+            <Text style={[styles.premiumTitle, { color: theme.onPrimary }]}>Upgrade to Pro Closer</Text>
+          </View>
+          <Text style={[styles.premiumSub, { color: `${theme.onPrimary}DD` }]}>
+            Stop typing, start closing. Get the full power of Relay.
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         style={[styles.shareCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
@@ -305,38 +161,15 @@ export const SettingsScreen: React.FC = () => {
           <Share2 size={20} color={theme.primary} />
         </View>
         <View style={styles.shareTextWrap}>
-          <Text style={[styles.shareTitle, { color: theme.text }]}>Share Qoppy</Text>
-          <Text style={[styles.shareSub, { color: theme.textSecondary }]}>Invite your friends or colleagues to try Qoppy.</Text>
+          <Text style={[styles.shareTitle, { color: theme.text }]}>Share Relay</Text>
+          <Text style={[styles.shareSub, { color: theme.textSecondary }]}>Invite your friends or colleagues to try Relay.</Text>
         </View>
         <ChevronRight size={18} color={theme.textMuted} />
       </TouchableOpacity>
 
       <Section title="Usage">
-        <Row icon={Info} iconColor={theme.primary} label="Snippets stored" sublabel={`${snippetCount} snippets saved`} />
+        <Row icon={Info} iconColor={theme.primary} label="Messages saved" sublabel={`${snippetCount} messages saved on device only`} />
         <Row icon={Tag} iconColor={theme.primary} label="Manage categories" onPress={() => navigation.navigate('ManageCategories')} />
-      </Section>
-
-      <Section title="Account">
-        <Row
-          icon={CircleUserRound}
-          iconColor={theme.primary}
-          label="Sign in with Google"
-          sublabel={
-            googleAccount
-              ? `${googleAccount.email}${googleAccount.name ? ` • ${googleAccount.name}` : ''}`
-              : isGoogleBusy
-                ? 'Connecting your Google account...'
-                : 'Optional for backup and device sync'
-          }
-          onPress={handleGoogleSignIn}
-        />
-        <Row
-          icon={ShieldAlert}
-          label="Delete account"
-          sublabel="Remove local account data from this device"
-          danger
-          onPress={handleDeleteAccount}
-        />
       </Section>
 
       <Section title="Preferences">
@@ -344,7 +177,7 @@ export const SettingsScreen: React.FC = () => {
           icon={Zap}
           iconColor={theme.success}
           label="Haptic feedback"
-          sublabel="Vibrate on copy"
+          sublabel="Vibrate on send"
           right={
             <Switch
               value={hapticEnabled}
@@ -356,13 +189,23 @@ export const SettingsScreen: React.FC = () => {
         />
       </Section>
 
+      <Section title="Data">
+        <Row
+          icon={Trash2}
+          iconColor={theme.danger}
+          label="Clear all data"
+          danger
+          onPress={handleClearAllData}
+        />
+      </Section>
+
       <Section title="Support">
         <Row
           icon={Bug}
           iconColor={theme.primary}
           label="Report a Bug or Idea"
           sublabel="Send feedback by email"
-          onPress={() => Linking.openURL('mailto:support@qoppy.app?subject=Qoppy%20Bug%20or%20Idea')}
+          onPress={() => Linking.openURL('mailto:support@relay.app?subject=Relay%20Bug%20or%20Idea')}
         />
       </Section>
 
@@ -381,7 +224,7 @@ export const SettingsScreen: React.FC = () => {
         />
       </Section>
 
-      <Text style={[styles.version, { color: theme.textSecondary }]}>Qoppy v1.0.0</Text>
+      <Text style={[styles.version, { color: theme.textSecondary }]}>Relay v1.0.0</Text>
     </ScrollView>
   );
 };

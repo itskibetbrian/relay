@@ -1,5 +1,8 @@
 import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
+// Play Console prices must match Relay's paywall exactly:
+// monthly subscription product -> $9.99, yearly subscription product -> $89.99.
+
 export type NativeBillingStatus =
   | 'initializing'
   | 'ready'

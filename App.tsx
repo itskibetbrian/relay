@@ -6,7 +6,6 @@ import { Text, TextInput } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
-import * as WebBrowser from 'expo-web-browser';
 import * as SplashScreen from 'expo-splash-screen';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -24,8 +23,6 @@ import {
   Rubik_800ExtraBold, 
   Rubik_900Black 
 } from '@expo-google-fonts/rubik';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const TextWithDefaults = Text as typeof Text & { defaultProps?: { style?: unknown } };
 const TextInputWithDefaults = TextInput as typeof TextInput & { defaultProps?: { style?: unknown } };

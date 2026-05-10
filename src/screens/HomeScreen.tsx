@@ -9,7 +9,7 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Plus } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,6 +42,7 @@ export const HomeScreen: React.FC = () => {
     isLoading,
     copiedId,
     copySnippet,
+    shareSnippet,
     toggleFavorite,
     deleteSnippet,
     filterByCategory,
@@ -49,6 +50,11 @@ export const HomeScreen: React.FC = () => {
     searchQuery,
     setSearchQuery,
     premiumPromptVisible,
+    premiumPromptReason,
+    isPremium,
+    monthlyShareCount,
+    freeShareLimit,
+    refreshShareUsage,
     dismissPremiumPrompt,
     refresh,
   } = useSnippets();
@@ -58,13 +64,19 @@ export const HomeScreen: React.FC = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: 'Qoppy',
+      headerTitle: 'Relay',
     });
   }, [navigation]);
 
   React.useEffect(() => {
     triggerPrompt();
   }, [triggerPrompt]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshShareUsage();
+    }, [refreshShareUsage])
+  );
 
   const handleEdit = useCallback((snippet: Snippet) => {
     navigation.navigate('AddSnippet', { snippetId: snippet.id });
@@ -84,24 +96,46 @@ export const HomeScreen: React.FC = () => {
             snippet={item}
             isCopied={copiedId === item.id}
             onCopy={copySnippet}
+            onShare={shareSnippet}
             onFavorite={toggleFavorite}
             onEdit={handleEdit}
             onDelete={handleDelete}
           />
         </Animated.View>
       ),
-    [copiedId, copySnippet, toggleFavorite, handleEdit, handleDelete]
+    [copiedId, copySnippet, shareSnippet, toggleFavorite, handleEdit, handleDelete]
   );
 
   const EmptyState = () => (
     <View style={styles.empty}>
       <Text style={[styles.emptyIcon, { color: theme.primary }]}>[]</Text>
-      <Text style={[styles.emptyTitle, { color: theme.text }]}>{searchQuery ? 'No results found' : 'No snippets yet'}</Text>
+      <Text style={[styles.emptyTitle, { color: theme.text }]}>{searchQuery ? 'No results found' : 'No messages yet'}</Text>
       <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-        {searchQuery ? 'Try a different search term.' : 'Tap + to save your first snippet.'}
+        {searchQuery ? 'Try a different search term.' : 'Tap + to save your first message.'}
       </Text>
     </View>
   );
+
+  const FreeSendIndicator = () => {
+    if (isPremium) {
+      return null;
+    }
+
+    return (
+      <View style={styles.sendUsageRow}>
+        <Text style={[styles.sendUsageText, { color: theme.textMuted }]}>
+          {monthlyShareCount} of {freeShareLimit} free sends used
+        </Text>
+        <Text style={[styles.sendUsageText, { color: theme.textMuted }]}> · </Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Paywall', { source: 'home-usage' })}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.sendUsageLink, { color: theme.primary }]}>Upgrade</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -118,13 +152,14 @@ export const HomeScreen: React.FC = () => {
         refreshing={isLoading && snippets.length > 0}
         ListHeaderComponent={
           <View style={styles.listHeader}>
-            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search snippets..." />
+            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search messages..." />
             <CategoryChipBar
               categories={categories}
               activeId={activeCategory}
               onSelect={filterByCategory}
               onManage={() => navigation.navigate('ManageCategories')}
             />
+            <FreeSendIndicator />
           </View>
         }
         ListEmptyComponent={
@@ -178,9 +213,11 @@ export const HomeScreen: React.FC = () => {
         <View style={[styles.modalOverlay, { backgroundColor: theme.overlay }]}>
           <Pressable style={StyleSheet.absoluteFill} />
           <View style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>You reached 10 snippets</Text>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              You've used all 25 free sends
+            </Text>
             <Text style={[styles.modalBody, { color: theme.textSecondary }]}>
-              Free Qoppy now pauses at 10 saved snippets. Upgrade for unlimited snippets, backup, and device sync, or close this message and keep using your current library.
+              Upgrade to Pro Closer for unlimited sends and no watermark.
             </Text>
             <TouchableOpacity
               style={[styles.modalPrimaryButton, { backgroundColor: theme.primary }]}
@@ -190,7 +227,7 @@ export const HomeScreen: React.FC = () => {
               }}
               activeOpacity={0.85}
             >
-              <Text style={[styles.modalPrimaryText, { color: theme.onPrimary }]}>Go Premium</Text>
+              <Text style={[styles.modalPrimaryText, { color: theme.onPrimary }]}>Upgrade to Pro Closer</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalSecondaryButton, { borderColor: theme.border, backgroundColor: theme.surfaceAlt }]}
@@ -242,6 +279,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     paddingHorizontal: 16,
     paddingBottom: 2,
+  },
+  sendUsageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 2,
+    paddingBottom: 8,
+  },
+  sendUsageText: {
+    ...textFont('regular'),
+    fontSize: 12,
+  },
+  sendUsageLink: {
+    ...textFont('semibold'),
+    fontSize: 12,
   },
   empty: {
     alignItems: 'center',

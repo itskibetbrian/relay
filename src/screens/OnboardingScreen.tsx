@@ -26,20 +26,38 @@ export const OnboardingScreen: React.FC = () => {
 
   const steps = [
     {
-      title: 'Save what you reuse',
-      subtitle: 'Keep addresses, links, templates, invoice details, and other repeat text ready to copy.',
+      title: 'Meet Relay',
+      subtitle: 'Save the messages you send most often, then share them from one clean library.',
       accent: theme.primary,
-      body: null,
+      body: (
+        <View style={styles.guideList}>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Tap any message card to open the native share sheet.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Use the clipboard icon when you only need a silent copy.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Pin favorites for the messages you send every day.</Text>
+        </View>
+      ),
     },
     {
-      title: 'Quick category guide',
-      subtitle: 'A simple way to sort your snippets from day one.',
+      title: 'Start with examples',
+      subtitle: 'Relay includes ready-made Sales and Support messages on first launch.',
       accent: theme.success,
       body: (
         <View style={styles.guideList}>
-          <Text style={[styles.guideLine, { color: theme.text }]}>Finance: IBAN or bank account details, PayPal or payment links, tax numbers, invoice details.</Text>
-          <Text style={[styles.guideLine, { color: theme.text }]}>Work: work email, company address, Zoom or Meet links, templates, signatures.</Text>
-          <Text style={[styles.guideLine, { color: theme.text }]}>Other: anything that does not fit the categories above.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Sales: price lists, payment links, thank-yous, follow-ups, and FAQs.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Support: issue received, troubleshooting steps, and resolved updates.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Create your own categories anytime from Settings.</Text>
+        </View>
+      ),
+    },
+    {
+      title: 'Send faster',
+      subtitle: 'Free Relay includes 25 shared messages per month with a Relay watermark.',
+      accent: theme.primary,
+      body: (
+        <View style={styles.guideList}>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Premium unlocks unlimited folders and messages.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Premium shared messages send without the Relay watermark.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Your messages and preferences stay stored locally on this device.</Text>
         </View>
       ),
     },
@@ -51,6 +69,7 @@ export const OnboardingScreen: React.FC = () => {
   const handleNext = async () => {
     if (isLast) {
       await db.setPreference('onboarded', 'true');
+      await db.setPreference('hasOnboarded', 'true');
       navigation.replace('Main');
       return;
     }
@@ -96,7 +115,7 @@ export const OnboardingScreen: React.FC = () => {
         onPress={handleNext}
         activeOpacity={0.85}
       >
-        <Text style={[styles.btnText, { color: theme.onPrimary }]}>{isLast ? 'Get Started' : 'Next'}</Text>
+        <Text style={[styles.btnText, { color: theme.onPrimary }]}>{isLast ? 'Start sending' : 'Next'}</Text>
       </TouchableOpacity>
 
       {isLast && (
@@ -104,14 +123,14 @@ export const OnboardingScreen: React.FC = () => {
           By continuing, you agree to our{' '}
           <Text 
             style={[styles.link, { color: theme.primary }]}
-            onPress={() => WebBrowser.openBrowserAsync('https://qoppy.app/terms')}
+            onPress={() => WebBrowser.openBrowserAsync('https://relay.app/terms')}
           >
             Terms of Service
           </Text>
           {' '}and{' '}
           <Text 
             style={[styles.link, { color: theme.primary }]}
-            onPress={() => WebBrowser.openBrowserAsync('https://qoppy.app/privacy')}
+            onPress={() => WebBrowser.openBrowserAsync('https://relay.app/privacy')}
           >
             Privacy Policy
           </Text>

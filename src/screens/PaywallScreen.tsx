@@ -22,15 +22,16 @@ import nativeBilling, {
 import { syncPremiumStatusFromBilling } from '../services/premiumSync';
 
 const BENEFITS = [
-  'Unlimited snippets instead of the free-tier cap of 10',
-  'Secure backup for your saved snippets',
-  'Device sync across your signed-in sessions',
+  'Reclaim 4+ Hours a Week — stop retyping the same messages. Send any message in under 10 seconds.',
+  'Infinite Messages — never run out of space for your winning talk-tracks.',
+  'No Watermark — send scripts without the "Sent via Relay" tag. Professionalism only.',
 ];
 
+// Billing prices must match the Google Play Console products exactly:
+// monthly -> $9.99, yearly -> $89.99.
 const SUBSCRIPTION_SKUS = {
-  monthly: 'com.qoppy.app.premium.monthly',
-  yearly: 'com.qoppy.app.premium.yearly',
-  lifetime: 'com.qoppy.app.premium.lifetime',
+  monthly: 'com.relay.app.premium.monthly',
+  yearly: 'com.relay.app.premium.yearly',
 } as const;
 
 type PlanKey = keyof typeof SUBSCRIPTION_SKUS;
@@ -43,13 +44,11 @@ interface PlanConfig {
 }
 
 const FALLBACK_PLANS: Record<PlanKey, PlanConfig> = {
-  monthly: { label: 'Monthly', price: '$4.99', period: '/month' },
-  yearly: { label: 'Yearly', price: '$49.99', period: '/year', badge: 'Save 16%' },
-  lifetime: { label: 'Lifetime', price: '$99', period: 'One-time' },
+  monthly: { label: 'Monthly', price: '$9.99', period: '/month' },
+  yearly: { label: 'Yearly', price: '$89.99', period: '/year', badge: 'Save 25%' },
 };
 
 const getPeriodLabel = (billingPeriod?: string | null, planKey?: PlanKey): string | null => {
-  if (planKey === 'lifetime') return 'One-time';
   switch (billingPeriod) {
     case 'P1M':
       return '/month';
@@ -78,12 +77,38 @@ const getPlanFromSubscription = (
 };
 
 export const PaywallScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const [plan, setPlan] = useState<PlanKey>('yearly');
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [products, setProducts] = useState<NativeSubscriptionProduct[]>([]);
   const [billingState, setBillingState] = useState<NativeBillingState>({ status: 'initializing' });
+  const [isCheckingPremium, setIsCheckingPremium] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    (async () => {
+      const isPremium = (await db.getPreference('premium_enabled', 'false')) === 'true';
+      if (!isMounted) {
+        return;
+      }
+
+      if (isPremium) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Main', params: { screen: 'Settings' } }],
+        });
+        return;
+      }
+
+      setIsCheckingPremium(false);
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigation]);
 
   useEffect(() => {
     if (!nativeBilling.isAvailable() || Platform.OS !== 'android') {
@@ -161,7 +186,6 @@ export const PaywallScreen: React.FC = () => {
     () => ({
       monthly: getPlanFromSubscription(subscriptionsBySku[SUBSCRIPTION_SKUS.monthly], FALLBACK_PLANS.monthly),
       yearly: getPlanFromSubscription(subscriptionsBySku[SUBSCRIPTION_SKUS.yearly], FALLBACK_PLANS.yearly),
-      lifetime: getPlanFromSubscription(subscriptionsBySku[SUBSCRIPTION_SKUS.lifetime], FALLBACK_PLANS.lifetime),
     }),
     [subscriptionsBySku]
   );
@@ -169,6 +193,10 @@ export const PaywallScreen: React.FC = () => {
   const active = plans[plan];
 
   const purchase = async () => {
+    if (!plan) {
+      return;
+    }
+
     if (Platform.OS !== 'android') {
       Alert.alert('Google Play only', 'This checkout flow is currently available in the Android app only.');
       return;
@@ -212,13 +240,17 @@ export const PaywallScreen: React.FC = () => {
     }
   };
 
+  if (isCheckingPremium) {
+    return null;
+  }
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
       <View style={styles.hero}>
         <Crown size={44} color={theme.primary} fill={`${theme.primary}20`} />
-        <Text style={[styles.heroTitle, { color: theme.text }]}>Qoppy Premium</Text>
+        <Text style={[styles.heroTitle, { color: theme.text }]}>Relay Premium</Text>
         <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-          Free includes up to 10 snippets. Premium unlocks unlimited snippets, backup, and device sync.
+          Join the top 1% of closers.
         </Text>
       </View>
 
@@ -234,7 +266,7 @@ export const PaywallScreen: React.FC = () => {
       </View>
 
       <View style={styles.toggle}>
-        {(['monthly', 'yearly', 'lifetime'] as const).map(key => {
+        {(['monthly', 'yearly'] as const).map(key => {
           const selectedPlan = plans[key];
           const isActive = plan === key;
           return (
@@ -282,12 +314,14 @@ export const PaywallScreen: React.FC = () => {
             <Text style={[styles.ctaText, { color: theme.onPrimary }]}>Processing...</Text>
           </View>
         ) : (
-          <Text style={[styles.ctaText, { color: theme.onPrimary }]}>Continue to Pay</Text>
+          <Text style={[styles.ctaText, { color: theme.onPrimary }]}>
+            Start {active.label} — {active.price}{active.period}
+          </Text>
         )}
       </TouchableOpacity>
 
       <Text style={[styles.finePrint, { color: theme.textSecondary }]}>
-        Unlock your full potential with Qoppy Premium. Cancel anytime.
+        Relay Premium. Cancel anytime.
       </Text>
 
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.dismiss}>

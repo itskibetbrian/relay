@@ -26,12 +26,12 @@ export const FavoritesScreen: React.FC = () => {
   const { theme } = useTheme();
   const [favorites, setFavorites] = useState<Snippet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { copiedId, copySnippet, toggleFavorite: toggleFav, deleteSnippet } = useSnippets();
+  const { copiedId, copySnippet, shareSnippet, toggleFavorite: toggleFav, deleteSnippet } = useSnippets();
   const gridFavorites = useMemo(() => padGridItems(favorites, NUM_COLUMNS), [favorites]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: 'Qoppy',
+      headerTitle: 'Relay',
     });
   }, [navigation]);
 
@@ -63,6 +63,7 @@ export const FavoritesScreen: React.FC = () => {
           snippet={item}
           isCopied={copiedId === item.id}
           onCopy={copySnippet}
+          onShare={shareSnippet}
           onFavorite={handleToggleFav}
           onEdit={snippet => navigation.navigate('AddSnippet', { snippetId: snippet.id })}
           onDelete={async id => {
@@ -71,7 +72,7 @@ export const FavoritesScreen: React.FC = () => {
           }}
         />
       ),
-    [copiedId, copySnippet, deleteSnippet, handleToggleFav, navigation]
+    [copiedId, copySnippet, deleteSnippet, handleToggleFav, navigation, shareSnippet]
   );
 
   if (isLoading) {
@@ -91,17 +92,17 @@ export const FavoritesScreen: React.FC = () => {
         numColumns={NUM_COLUMNS}
         columnWrapperStyle={NUM_COLUMNS > 1 ? styles.row : undefined}
         contentContainerStyle={styles.list}
-        ListHeaderComponent={
+        ListHeaderComponent={favorites.length > 0 ? (
           <Text style={[styles.count, { color: theme.textSecondary }]}>
             {favorites.length} favorite{favorites.length !== 1 ? 's' : ''}
           </Text>
-        }
+        ) : null}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={[styles.emptyIcon, { color: theme.primary }]}>♡</Text>
             <Text style={[styles.emptyTitle, { color: theme.text }]}>No favorites yet</Text>
             <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-              Save the snippets you reach for most and they’ll show up here for quick copying.
+              Pin your most-sent messages here for one-tap sharing.
             </Text>
           </View>
         }

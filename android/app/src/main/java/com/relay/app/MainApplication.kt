@@ -1,8 +1,8 @@
-package com.qoppy.app
+package com.relay.app
 
 import android.app.Application
 import android.content.res.Configuration
-import com.qoppy.app.billing.BillingPackage
+import com.relay.app.billing.BillingPackage
 
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication

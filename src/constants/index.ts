@@ -14,11 +14,11 @@ export const CATEGORY_COLORS = [
 ];
 
 export const DEFAULT_CATEGORIES = [
-  { id: 'personal', name: 'Personal', color: '#6366F1', icon: 'tag' },
-  { id: 'work', name: 'Work', color: '#3B82F6', icon: 'briefcase' },
+  { id: 'sales', name: 'Sales', color: '#8B5CF6', icon: 'tag' },
+  { id: 'support', name: 'Support', color: '#3B82F6', icon: 'tag' },
   { id: 'finance', name: 'Finance', color: '#10B981', icon: 'credit-card' },
-  { id: 'links', name: 'Links', color: '#EC4899', icon: 'globe' },
-  { id: 'address', name: 'Address', color: '#F59E0B', icon: 'map-pin' },
+  { id: 'marketing', name: 'Marketing', color: '#EC4899', icon: 'globe' },
+  { id: 'operations', name: 'Operations', color: '#F59E0B', icon: 'briefcase' },
   { id: 'other', name: 'Other', color: '#8B5CF6', icon: 'tag' },
 ];
 

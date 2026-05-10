@@ -1,4 +1,4 @@
-package com.qoppy.app.billing
+package com.relay.app.billing
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

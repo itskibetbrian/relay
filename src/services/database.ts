@@ -1,7 +1,7 @@
 // src/services/database.ts
 //
 // Database Service — SQLite via expo-sqlite
-// Handles all persistence: snippets, categories, user prefs.
+// Handles all persistence: messages, categories, user prefs.
 // All methods return typed results; errors bubble to callers.
 
 import * as SQLite from 'expo-sqlite';
@@ -40,7 +40,7 @@ class DatabaseService {
       );
     `);
 
-    // Snippets table
+    // Messages table. Kept as `snippets` for existing SQLite compatibility.
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS snippets (
         id          TEXT PRIMARY KEY NOT NULL,
@@ -63,7 +63,7 @@ class DatabaseService {
     `);
 
     await this.seedDefaultCategories();
-    await this.seedExampleSnippets();
+    await this.seedExampleMessages();
   }
 
   private async seedDefaultCategories(): Promise<void> {
@@ -76,36 +76,69 @@ class DatabaseService {
     }
   }
 
-  private async seedExampleSnippets(): Promise<void> {
+  private async seedExampleMessages(): Promise<void> {
     const db = this.getDb();
-    const [row, seededPreference] = await Promise.all([
+    const [row, seededPreference, hasOnboarded] = await Promise.all([
       db.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM snippets`),
       this.getPreference('example_snippets_seeded', 'false'),
+      this.getPreference('hasOnboarded', 'false'),
     ]);
 
-    if ((row?.count ?? 0) > 0 || seededPreference === 'true') {
+    // AsyncStorage is not installed in this app and the task forbids new libraries,
+    // so first-launch seeding uses Relay's existing preference store.
+    if ((row?.count ?? 0) > 0 || seededPreference === 'true' || hasOnboarded === 'true') {
       return;
     }
 
     const now = Date.now();
     const examples: Array<SnippetInsert & { id: string; categoryId: string }> = [
       {
-        id: `${now.toString(36)}-example-home`,
-        title: 'Home Address',
-        content: '15 Rue de Rivoli, 75004 Paris, France',
-        categoryId: 'personal',
+        id: `${now.toString(36)}-example-price-list`,
+        title: 'Price List',
+        content: "Hi! Here's our current price list. Let me know which option works best for you and I'll get you sorted right away.",
+        categoryId: 'sales',
       },
       {
-        id: `${(now + 1).toString(36)}-example-work`,
-        title: 'Work Email',
-        content: 'alex@company.com',
-        categoryId: 'work',
+        id: `${(now + 1).toString(36)}-example-payment-link`,
+        title: 'Payment Link',
+        content: 'Please use the link below to complete your payment. Reach out if you run into any issues — happy to help!',
+        categoryId: 'sales',
       },
       {
-        id: `${(now + 2).toString(36)}-example-iban`,
-        title: 'IBAN',
-        content: 'DE89 3704 0044 0532 0130 00',
-        categoryId: 'finance',
+        id: `${(now + 2).toString(36)}-example-thank-you`,
+        title: 'Thank You',
+        content: 'Thank you so much for your order! We really appreciate your support and will keep you updated every step of the way.',
+        categoryId: 'sales',
+      },
+      {
+        id: `${(now + 3).toString(36)}-example-follow-up`,
+        title: 'Follow-up',
+        content: "Hi! Just checking in to see if you had any questions about what we discussed. I'm here whenever you're ready.",
+        categoryId: 'sales',
+      },
+      {
+        id: `${(now + 4).toString(36)}-example-faq`,
+        title: 'FAQ',
+        content: 'Great question! Here are the answers to the questions we get most often. Let me know if anything needs more detail.',
+        categoryId: 'sales',
+      },
+      {
+        id: `${(now + 5).toString(36)}-example-issue-received`,
+        title: 'Issue Received',
+        content: "Thanks for reaching out! I've logged your issue and our team is already looking into it. We'll update you within 24 hours.",
+        categoryId: 'support',
+      },
+      {
+        id: `${(now + 6).toString(36)}-example-troubleshooting-steps`,
+        title: 'Troubleshooting Steps',
+        content: "Let's get this sorted. Please try these steps: 1) Restart the app, 2) Check your connection, 3) Clear your cache. Still stuck? Reply here and I'll escalate immediately.",
+        categoryId: 'support',
+      },
+      {
+        id: `${(now + 7).toString(36)}-example-resolved`,
+        title: 'Resolved',
+        content: 'Great news — your issue has been resolved! Please let us know if anything else comes up. Always happy to help.',
+        categoryId: 'support',
       },
     ];
 
@@ -121,7 +154,7 @@ class DatabaseService {
     await this.setPreference('example_snippets_seeded', 'true');
   }
 
-  // ─── Snippet CRUD ─────────────────────────────────────────────────────────
+  // ─── Message CRUD ─────────────────────────────────────────────────────────
 
   async getAllSnippets(): Promise<Snippet[]> {
     const db = this.getDb();
@@ -307,6 +340,21 @@ class DatabaseService {
     );
   }
 
+  async clearAllData(): Promise<void> {
+    const db = this.getDb();
+
+    // Relay uses SQLite preferences/tables instead of AsyncStorage, so this
+    // clears the equivalent app-owned keys, saved messages, favorites, and categories.
+    await db.execAsync(`
+      DELETE FROM snippets;
+      DELETE FROM categories;
+      DELETE FROM preferences;
+    `);
+
+    await this.seedDefaultCategories();
+    await this.seedExampleMessages();
+  }
+
   // ─── Category CRUD ────────────────────────────────────────────────────────
 
   async getAllCategories(): Promise<Category[]> {
@@ -340,7 +388,7 @@ class DatabaseService {
 
   async deleteCategory(id: string): Promise<void> {
     const db = this.getDb();
-    // Reassign snippets to 'other' category before deleting.
+    // Reassign messages to 'other' category before deleting.
     // If we are deleting 'other' itself, we let them become NULL (default behavior).
     if (id !== 'other') {
       await db.runAsync(

@@ -27,7 +27,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const LaunchSplash = ({ backgroundColor, textColor }: { backgroundColor: string; textColor: string }) => (
   <View style={[splashStyles.container, { backgroundColor }]}>
     <Image source={require('../../assets/splash.png')} style={splashStyles.logo} resizeMode="contain" />
-    <Text style={[splashStyles.title, { color: textColor }]}>Qoppy</Text>
+    <Text style={[splashStyles.title, { color: textColor }]}>Relay</Text>
   </View>
 );
 
@@ -69,8 +69,11 @@ export const RootNavigator: React.FC = () => {
         } catch {
           // Keep launch resilient if Google Play is temporarily unavailable.
         }
-        const onboarded = await db.getPreference('onboarded');
-        setInitialRoute(onboarded === 'true' ? 'Main' : 'Onboarding');
+        const [onboarded, hasOnboarded] = await Promise.all([
+          db.getPreference('onboarded'),
+          db.getPreference('hasOnboarded'),
+        ]);
+        setInitialRoute(onboarded === 'true' || hasOnboarded === 'true' ? 'Main' : 'Onboarding');
       } catch {
         setInitialRoute('Onboarding');
       } finally {

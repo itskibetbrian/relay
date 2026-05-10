@@ -243,7 +243,7 @@ export const ManageCategoriesScreen: React.FC = () => {
   const handleDelete = (cat: Category) => {
     Alert.alert(
       `Delete "${cat.name}"?`,
-      'Snippets in this category will move to the "Other" category.',
+      'Messages in this category will move to the "Other" category.',
       [
         { text: 'Cancel', style: 'cancel' },
         { 

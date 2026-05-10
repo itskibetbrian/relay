@@ -15,6 +15,9 @@ const CARD_GAP = 8;
 export const SnippetCardSkeleton: React.FC = () => {
   const { theme } = useTheme();
   const opacity = useSharedValue(0.4);
+  const cardColor = theme.mode === 'light' ? theme.background : theme.surface;
+  const skeletonColor = theme.mode === 'light' ? 'rgba(255, 255, 255, 0.42)' : theme.surfaceAlt;
+  const skeletonBorder = theme.mode === 'light' ? 'rgba(255, 255, 255, 0.38)' : theme.border;
 
   React.useEffect(() => {
     opacity.value = withRepeat(
@@ -36,15 +39,15 @@ export const SnippetCardSkeleton: React.FC = () => {
       <View
         style={[
           styles.card,
-          { backgroundColor: theme.surface, borderColor: theme.border, shadowColor: theme.shadow },
+          { backgroundColor: cardColor, borderColor: skeletonBorder, shadowColor: theme.shadow },
         ]}
       >
         <Animated.View style={[styles.contentWrap, animatedStyle]}>
-          <View style={[styles.badgeSkeleton, { backgroundColor: theme.surfaceAlt }]} />
-          <View style={[styles.titleSkeleton, { backgroundColor: theme.surfaceAlt }]} />
-          <View style={[styles.contentSkeleton, { backgroundColor: theme.surfaceAlt }]} />
+          <View style={[styles.badgeSkeleton, { backgroundColor: skeletonColor }]} />
+          <View style={[styles.titleSkeleton, { backgroundColor: skeletonColor }]} />
+          <View style={[styles.contentSkeleton, { backgroundColor: skeletonColor }]} />
           <View style={styles.footer}>
-            <View style={[styles.dateSkeleton, { backgroundColor: theme.surfaceAlt }]} />
+            <View style={[styles.dateSkeleton, { backgroundColor: skeletonColor }]} />
           </View>
         </Animated.View>
       </View>
