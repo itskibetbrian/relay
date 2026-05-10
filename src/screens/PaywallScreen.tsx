@@ -248,7 +248,7 @@ export const PaywallScreen: React.FC = () => {
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
       <View style={styles.hero}>
         <Crown size={44} color={theme.primary} fill={`${theme.primary}20`} />
-        <Text style={[styles.heroTitle, { color: theme.text }]}>Relay Premium</Text>
+        <Text style={[styles.heroTitle, { color: theme.text }]}>Relay Pro Closer</Text>
         <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
           Join the top 1% of closers.
         </Text>
@@ -321,7 +321,7 @@ export const PaywallScreen: React.FC = () => {
       </TouchableOpacity>
 
       <Text style={[styles.finePrint, { color: theme.textSecondary }]}>
-        Relay Premium. Cancel anytime.
+        Relay Pro Closer. Cancel anytime.
       </Text>
 
       <TouchableOpacity onPress={() => navigation.goBack()} style={styles.dismiss}>
