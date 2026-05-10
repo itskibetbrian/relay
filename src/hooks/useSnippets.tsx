@@ -14,7 +14,7 @@ import { db } from '../services/database';
 import { Snippet, SnippetInsert, SnippetUpdate } from '../types';
 import { useRatingPrompt } from './useRatingPrompt';
 
-const FREE_SHARE_LIMIT = 25;
+const FREE_SHARE_LIMIT = 50;
 const SHARE_COUNT_KEY = 'monthly_share_count';
 
 type PremiumPromptReason = 'share-limit';

@@ -65,7 +65,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const { theme } = useTheme();
+  const { theme, mode } = useTheme();
   const scale = useSharedValue(1);
   const glowOpacity = useSharedValue(0);
   const copyProgress = useSharedValue(0);
@@ -130,7 +130,12 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
       <Animated.View style={[styles.glow, glowStyle, { borderColor: theme.success, shadowColor: theme.success }]} />
 
       <AnimatedPressable
-        style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border, shadowColor: theme.shadow }, cardBgStyle]}
+        style={[
+          styles.card,
+          mode === 'light' && styles.lightCard,
+          { backgroundColor: theme.surface, borderColor: theme.border, shadowColor: theme.shadow },
+          cardBgStyle,
+        ]}
         onPress={handleShare}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -273,6 +278,11 @@ const styles = StyleSheet.create({
         elevation: 4,
       },
     }),
+  },
+  lightCard: {
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
   contentWrap: {
     flex: 1,

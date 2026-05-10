@@ -51,7 +51,7 @@ export const OnboardingScreen: React.FC = () => {
     },
     {
       title: 'Send faster',
-      subtitle: 'Free Relay includes 25 shared messages per month with a Relay watermark.',
+      subtitle: 'Free Relay includes 50 shared messages per month with a Relay watermark.',
       accent: theme.primary,
       body: (
         <View style={styles.guideList}>

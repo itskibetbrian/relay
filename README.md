@@ -10,7 +10,7 @@ It is built for a clean mobile-first experience with local storage, optional app
 - Organize messages with six default categories: Sales, Support, Finance, Marketing, Operations, and Other
 - Share saved messages from the full card surface
 - Copy messages silently with the clipboard icon
-- Free tier includes 25 shared messages per month with monthly reset
+- Free tier includes 50 shared messages per month with monthly reset
 - Premium boilerplate with unlimited folders and messages
 - Local-first SQLite persistence
 - Expo + React Native + TypeScript

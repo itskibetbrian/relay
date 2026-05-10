@@ -32,6 +32,7 @@ import { isGridPlaceholderItem, padGridItems, GridListItem } from '../utils/padG
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 const NUM_COLUMNS = 2;
+const FREE_SEND_WARNING_THRESHOLD = 40;
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
@@ -121,12 +122,14 @@ export const HomeScreen: React.FC = () => {
       return null;
     }
 
+    const usageColor = monthlyShareCount >= FREE_SEND_WARNING_THRESHOLD ? theme.danger : theme.textMuted;
+
     return (
       <View style={styles.sendUsageRow}>
-        <Text style={[styles.sendUsageText, { color: theme.textMuted }]}>
+        <Text style={[styles.sendUsageText, { color: usageColor }]}>
           {monthlyShareCount} of {freeShareLimit} free sends used
         </Text>
-        <Text style={[styles.sendUsageText, { color: theme.textMuted }]}> · </Text>
+        <Text style={[styles.sendUsageText, { color: usageColor }]}> · </Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('Paywall', { source: 'home-usage' })}
           activeOpacity={0.75}
@@ -214,10 +217,10 @@ export const HomeScreen: React.FC = () => {
           <Pressable style={StyleSheet.absoluteFill} />
           <View style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <Text style={[styles.modalTitle, { color: theme.text }]}>
-              You've used all 25 free sends
+              You've used all 50 free sends
             </Text>
             <Text style={[styles.modalBody, { color: theme.textSecondary }]}>
-              Upgrade to Pro Closer for unlimited sends and no watermark.
+              Upgrade to Pro Closer after 50 free sends for unlimited sends and no watermark.
             </Text>
             <TouchableOpacity
               style={[styles.modalPrimaryButton, { backgroundColor: theme.primary }]}
