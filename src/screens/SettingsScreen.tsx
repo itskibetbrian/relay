@@ -15,10 +15,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import {
   Crown,
-  Tag,
   ExternalLink,
   ChevronRight,
-  Info,
   Zap,
   FileText,
   Share2,
@@ -81,19 +79,16 @@ export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavProp>();
   const { theme } = useTheme();
   const { isPremium, refresh, refreshShareUsage } = useSnippets();
-  const [snippetCount, setSnippetCount] = useState(0);
   const [hapticEnabled, setHapticEnabled] = useState(true);
 
-  const loadUsage = useCallback(() => {
-    db.getSnippetCount().then(setSnippetCount);
+  const loadPreferences = useCallback(() => {
     db.getPreference('haptic', 'true').then(v => setHapticEnabled(v === 'true'));
-    void refreshShareUsage();
-  }, [refreshShareUsage]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadUsage();
-    }, [loadUsage])
+      loadPreferences();
+    }, [loadPreferences])
   );
 
   const handleShareApp = async () => {
@@ -123,7 +118,6 @@ export const SettingsScreen: React.FC = () => {
             await db.clearAllData();
             await refresh();
             await refreshShareUsage();
-            setSnippetCount(0);
             navigation.reset({
               index: 0,
               routes: [{ name: 'Onboarding' }],
@@ -166,11 +160,6 @@ export const SettingsScreen: React.FC = () => {
         </View>
         <ChevronRight size={18} color={theme.textMuted} />
       </TouchableOpacity>
-
-      <Section title="Usage">
-        <Row icon={Info} iconColor={theme.primary} label="Messages saved" sublabel={`${snippetCount} messages saved on device only`} />
-        <Row icon={Tag} iconColor={theme.primary} label="Manage categories" onPress={() => navigation.navigate('ManageCategories')} />
-      </Section>
 
       <Section title="Preferences">
         <Row

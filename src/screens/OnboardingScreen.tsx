@@ -45,7 +45,7 @@ export const OnboardingScreen: React.FC = () => {
         <View style={styles.guideList}>
           <Text style={[styles.guideLine, { color: theme.text }]}>Sales: price lists, payment links, thank-yous, follow-ups, and FAQs.</Text>
           <Text style={[styles.guideLine, { color: theme.text }]}>Support: issue received, troubleshooting steps, and resolved updates.</Text>
-          <Text style={[styles.guideLine, { color: theme.text }]}>Create your own categories anytime from Settings.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Create your own categories anytime from Messages.</Text>
         </View>
       ),
     },
