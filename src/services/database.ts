@@ -49,10 +49,13 @@ class DatabaseService {
         category_id TEXT REFERENCES categories(id) ON DELETE SET NULL,
         is_favorite INTEGER NOT NULL DEFAULT 0,
         use_count   INTEGER NOT NULL DEFAULT 0,
+        last_used_at INTEGER,
         created_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
         updated_at  INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
       );
     `);
+
+    await this.ensureColumn('snippets', 'last_used_at', 'INTEGER');
 
     // User preferences (key-value store)
     await db.execAsync(`
@@ -161,12 +164,12 @@ class DatabaseService {
     const rows = await db.getAllAsync<any>(`
       SELECT
         s.id, s.title, s.content, s.category_id as categoryId,
-        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.is_favorite as isFavorite, s.use_count as useCount, s.last_used_at as lastUsedAt,
         s.created_at as createdAt, s.updated_at as updatedAt,
         c.name as categoryName, c.color as categoryColor
       FROM snippets s
       LEFT JOIN categories c ON s.category_id = c.id
-      ORDER BY s.updated_at DESC
+      ORDER BY COALESCE(s.last_used_at, s.updated_at) DESC
     `);
     return rows.map(row => this.mapSnippet(row));
   }
@@ -176,7 +179,7 @@ class DatabaseService {
     const row = await db.getFirstAsync<any>(`
       SELECT
         s.id, s.title, s.content, s.category_id as categoryId,
-        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.is_favorite as isFavorite, s.use_count as useCount, s.last_used_at as lastUsedAt,
         s.created_at as createdAt, s.updated_at as updatedAt,
         c.name as categoryName, c.color as categoryColor
       FROM snippets s
@@ -191,13 +194,13 @@ class DatabaseService {
     const rows = await db.getAllAsync<any>(`
       SELECT
         s.id, s.title, s.content, s.category_id as categoryId,
-        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.is_favorite as isFavorite, s.use_count as useCount, s.last_used_at as lastUsedAt,
         s.created_at as createdAt, s.updated_at as updatedAt,
         c.name as categoryName, c.color as categoryColor
       FROM snippets s
       LEFT JOIN categories c ON s.category_id = c.id
       WHERE s.category_id = ?
-      ORDER BY s.updated_at DESC
+      ORDER BY COALESCE(s.last_used_at, s.updated_at) DESC
     `, [categoryId]);
     return rows.map(this.mapSnippet);
   }
@@ -207,7 +210,7 @@ class DatabaseService {
     const rows = await db.getAllAsync<any>(`
       SELECT
         s.id, s.title, s.content, s.category_id as categoryId,
-        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.is_favorite as isFavorite, s.use_count as useCount, s.last_used_at as lastUsedAt,
         s.created_at as createdAt, s.updated_at as updatedAt,
         c.name as categoryName, c.color as categoryColor
       FROM snippets s
@@ -224,14 +227,14 @@ class DatabaseService {
     const rows = await db.getAllAsync<any>(`
       SELECT
         s.id, s.title, s.content, s.category_id as categoryId,
-        s.is_favorite as isFavorite, s.use_count as useCount,
+        s.is_favorite as isFavorite, s.use_count as useCount, s.last_used_at as lastUsedAt,
         s.created_at as createdAt, s.updated_at as updatedAt,
         c.name as categoryName, c.color as categoryColor
       FROM snippets s
       LEFT JOIN categories c ON s.category_id = c.id
-      WHERE s.title LIKE ? OR s.content LIKE ?
-      ORDER BY s.use_count DESC, s.updated_at DESC
-    `, [pattern, pattern]);
+      WHERE s.title LIKE ? OR s.content LIKE ? OR c.name LIKE ?
+      ORDER BY s.use_count DESC, COALESCE(s.last_used_at, s.updated_at) DESC
+    `, [pattern, pattern, pattern]);
     return rows.map(this.mapSnippet);
   }
 
@@ -297,9 +300,10 @@ class DatabaseService {
 
   async incrementUseCount(id: string): Promise<void> {
     const db = this.getDb();
+    const now = Date.now();
     await db.runAsync(
-      `UPDATE snippets SET use_count = use_count + 1, updated_at = ? WHERE id = ?`,
-      [Date.now(), id]
+      `UPDATE snippets SET use_count = use_count + 1, last_used_at = ?, updated_at = ? WHERE id = ?`,
+      [now, now, id]
     );
   }
 
@@ -411,6 +415,7 @@ class DatabaseService {
       categoryColor: row.categoryColor ?? undefined,
       isFavorite: row.isFavorite === 1 || row.is_favorite === 1,
       useCount: row.useCount ?? row.use_count ?? 0,
+      lastUsedAt: row.lastUsedAt ?? row.last_used_at ?? undefined,
       createdAt: row.createdAt ?? row.created_at ?? 0,
       updatedAt: row.updatedAt ?? row.updated_at ?? 0,
     };
@@ -428,6 +433,16 @@ class DatabaseService {
 
   private generateId(): string {
     return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+
+  private async ensureColumn(tableName: string, columnName: string, definition: string): Promise<void> {
+    const db = this.getDb();
+    const columns = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${tableName})`);
+    if (columns.some(column => column.name === columnName)) {
+      return;
+    }
+
+    await db.execAsync(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
   }
 }
 

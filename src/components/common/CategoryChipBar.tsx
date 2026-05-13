@@ -9,7 +9,7 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
-import { Settings } from 'lucide-react-native';
+import { Clock3, Settings } from 'lucide-react-native';
 import { Category } from '../../types';
 import { useTheme } from '../../hooks/useTheme';
 import { textFont } from '../../constants/typography';
@@ -17,14 +17,18 @@ import { textFont } from '../../constants/typography';
 interface CategoryChipBarProps {
   categories: Category[];
   activeId: string | null;
+  isRecentActive?: boolean;
   onSelect: (id: string | null) => void;
+  onRecent?: () => void;
   onManage?: () => void;
 }
 
 export const CategoryChipBar: React.FC<CategoryChipBarProps> = ({
   categories,
   activeId,
+  isRecentActive = false,
   onSelect,
+  onRecent,
   onManage,
 }) => {
   const { theme } = useTheme();
@@ -39,16 +43,26 @@ export const CategoryChipBar: React.FC<CategoryChipBarProps> = ({
       <Chip
         label="All"
         color={theme.primary}
-        isActive={activeId === null}
+        isActive={!isRecentActive && activeId === null}
         onPress={() => onSelect(null)}
         theme={theme}
       />
+      {onRecent && (
+        <Chip
+          label="Recent"
+          color={theme.success}
+          isActive={isRecentActive}
+          onPress={onRecent}
+          theme={theme}
+          icon={Clock3}
+        />
+      )}
       {categories.map(cat => (
         <Chip
           key={cat.id}
           label={cat.name}
           color={cat.color}
-          isActive={activeId === cat.id}
+          isActive={!isRecentActive && activeId === cat.id}
           onPress={() => onSelect(cat.id)}
           theme={theme}
         />
@@ -73,9 +87,10 @@ interface ChipProps {
   isActive: boolean;
   onPress: () => void;
   theme: ReturnType<typeof useTheme>['theme'];
+  icon?: React.ComponentType<any>;
 }
 
-const Chip: React.FC<ChipProps> = ({ label, color, isActive, onPress, theme }) => (
+const Chip: React.FC<ChipProps> = ({ label, color, isActive, onPress, theme, icon: Icon }) => (
   <Pressable
     style={({ pressed }) => [
       styles.chip,
@@ -90,7 +105,11 @@ const Chip: React.FC<ChipProps> = ({ label, color, isActive, onPress, theme }) =
     onPress={onPress}
     android_ripple={null}
   >
-    {isActive && <View style={[styles.activeDot, { backgroundColor: theme.onPrimary }]} />}
+    {Icon ? (
+      <Icon size={13} color={isActive ? theme.onPrimary : color} strokeWidth={2.2} />
+    ) : (
+      isActive && <View style={[styles.activeDot, { backgroundColor: theme.onPrimary }]} />
+    )}
     <Text
       style={[
         styles.chipText,

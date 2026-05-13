@@ -5,13 +5,12 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   Modal,
   Pressable,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Plus } from 'lucide-react-native';
+import { Plus, Sparkles } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -23,7 +22,7 @@ import { SearchBar } from '../components/common/SearchBar';
 import { useSnippets } from '../hooks/useSnippets';
 import { useCategories } from '../hooks/useCategories';
 import { useRatingPrompt } from '../hooks/useRatingPrompt';
-import { ANIMATION_DURATION } from '../constants';
+import { MESSAGE_TEMPLATES } from '../constants';
 import { textFont } from '../constants/typography';
 import { RootStackParamList, Snippet } from '../types';
 import { useTheme } from '../hooks/useTheme';
@@ -44,6 +43,7 @@ export const HomeScreen: React.FC = () => {
     copiedId,
     copySnippet,
     shareSnippet,
+    createSnippet,
     toggleFavorite,
     deleteSnippet,
     filterByCategory,
@@ -58,10 +58,17 @@ export const HomeScreen: React.FC = () => {
     refreshShareUsage,
     dismissPremiumPrompt,
     refresh,
+    showRecent,
+    isRecentActive,
   } = useSnippets();
   const { categories } = useCategories();
   const { triggerPrompt } = useRatingPrompt();
   const gridSnippets = useMemo(() => padGridItems(snippets, NUM_COLUMNS), [snippets]);
+  const activeCategoryDetails = useMemo(
+    () => categories.find(category => category.id === activeCategory),
+    [activeCategory, categories]
+  );
+  const existingCategoryIds = useMemo(() => new Set(categories.map(category => category.id)), [categories]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -87,6 +94,22 @@ export const HomeScreen: React.FC = () => {
     await deleteSnippet(id);
   }, [deleteSnippet]);
 
+  const handleCreateTemplate = useCallback(async (template: typeof MESSAGE_TEMPLATES[number]) => {
+    const categoryId = existingCategoryIds.has(template.categoryId)
+      ? template.categoryId
+      : activeCategory && existingCategoryIds.has(activeCategory)
+        ? activeCategory
+        : existingCategoryIds.has('other')
+          ? 'other'
+          : null;
+
+    await createSnippet({
+      title: template.title,
+      content: template.content,
+      categoryId,
+    });
+  }, [activeCategory, createSnippet, existingCategoryIds]);
+
   const renderItem = useCallback(
     ({ item, index }: { item: GridListItem<Snippet>; index: number }) =>
       isGridPlaceholderItem(item) ? (
@@ -101,21 +124,71 @@ export const HomeScreen: React.FC = () => {
             onFavorite={toggleFavorite}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            searchQuery={searchQuery}
           />
         </Animated.View>
       ),
-    [copiedId, copySnippet, shareSnippet, toggleFavorite, handleEdit, handleDelete]
+    [copiedId, copySnippet, handleDelete, handleEdit, searchQuery, shareSnippet, toggleFavorite]
   );
 
-  const EmptyState = () => (
-    <View style={styles.empty}>
-      <Text style={[styles.emptyIcon, { color: theme.primary }]}>[]</Text>
-      <Text style={[styles.emptyTitle, { color: theme.text }]}>{searchQuery ? 'No results found' : 'No messages yet'}</Text>
-      <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-        {searchQuery ? 'Try a different search term.' : 'Tap + to save your first message.'}
-      </Text>
-    </View>
-  );
+  const EmptyState = () => {
+    const hasSearch = Boolean(searchQuery.trim());
+    const categoryName = activeCategoryDetails?.name;
+    const templates = MESSAGE_TEMPLATES
+      .filter(template => !activeCategory || template.categoryId === activeCategory)
+      .slice(0, activeCategory ? 3 : 4);
+    const fallbackTemplates = templates.length > 0 ? templates : MESSAGE_TEMPLATES.slice(0, 3);
+    const title = hasSearch
+      ? 'No results found'
+      : isRecentActive
+        ? 'No recent sends yet'
+        : categoryName
+          ? `No ${categoryName} messages yet`
+          : 'No messages yet';
+    const subtitle = hasSearch
+      ? 'Search checks titles, message text, and category names.'
+      : isRecentActive
+        ? 'Copy or share a message and it will appear here.'
+        : categoryName
+          ? `Start with a ${categoryName.toLowerCase()} template or add your own.`
+          : 'Start from a template or tap + to write your own.';
+
+    return (
+      <View style={styles.empty}>
+        <Text style={[styles.emptyIcon, { color: theme.primary }]}>[]</Text>
+        <Text style={[styles.emptyTitle, { color: theme.text }]}>{title}</Text>
+        <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>{subtitle}</Text>
+
+        {hasSearch ? (
+          <TouchableOpacity
+            style={[styles.emptyButton, { backgroundColor: theme.primary }]}
+            onPress={() => setSearchQuery('')}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.emptyButtonText, { color: theme.onPrimary }]}>Clear search</Text>
+          </TouchableOpacity>
+        ) : (
+          !isRecentActive && (
+            <View style={styles.templateList}>
+              {fallbackTemplates.map(template => (
+                <TouchableOpacity
+                  key={template.id}
+                  style={[styles.templateButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
+                  onPress={() => void handleCreateTemplate(template)}
+                  activeOpacity={0.85}
+                >
+                  <Sparkles size={15} color={theme.primary} />
+                  <Text style={[styles.templateText, { color: theme.text }]} numberOfLines={1}>
+                    {template.title}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )
+        )}
+      </View>
+    );
+  };
 
   const FreeSendIndicator = () => {
     if (isPremium) {
@@ -159,7 +232,9 @@ export const HomeScreen: React.FC = () => {
             <CategoryChipBar
               categories={categories}
               activeId={activeCategory}
+              isRecentActive={isRecentActive}
               onSelect={filterByCategory}
+              onRecent={showRecent}
               onManage={() => navigation.navigate('ManageCategories')}
             />
             <FreeSendIndicator />
@@ -319,6 +394,36 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'center',
     lineHeight: 23,
+  },
+  emptyButton: {
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    marginTop: 18,
+  },
+  emptyButtonText: {
+    ...textFont('bold'),
+    fontSize: 14,
+  },
+  templateList: {
+    alignSelf: 'stretch',
+    paddingHorizontal: 10,
+    marginTop: 20,
+    gap: 8,
+  },
+  templateButton: {
+    minHeight: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  templateText: {
+    ...textFont('semibold'),
+    fontSize: 14,
+    flex: 1,
   },
   skeletonGrid: {
     flexDirection: 'row',

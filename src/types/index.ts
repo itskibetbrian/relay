@@ -17,6 +17,7 @@ export interface Snippet {
   categoryColor?: string;
   isFavorite: boolean;
   useCount: number;
+  lastUsedAt?: number;
   createdAt: number;
   updatedAt: number;
 }

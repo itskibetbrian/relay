@@ -17,6 +17,7 @@ import {
   Crown,
   ExternalLink,
   ChevronRight,
+  Info,
   Zap,
   FileText,
   Share2,
@@ -105,6 +106,20 @@ export const SettingsScreen: React.FC = () => {
     await db.setPreference('haptic', value ? 'true' : 'false');
   };
 
+  const handleShowHowToUse = () => {
+    Alert.alert(
+      'How to use Relay',
+      [
+        'Tap a message card to share it.',
+        'Tap the copy icon to copy quietly.',
+        'Long-press a card to edit it.',
+        'Use categories to filter messages.',
+        'Use Recent to find messages you copied or shared lately.',
+        'Tap template suggestions when a category is empty.',
+      ].join('\n\n')
+    );
+  };
+
   const handleClearAllData = () => {
     Alert.alert(
       'Clear all data?',
@@ -160,6 +175,16 @@ export const SettingsScreen: React.FC = () => {
         </View>
         <ChevronRight size={18} color={theme.textMuted} />
       </TouchableOpacity>
+
+      <Section title="Usage">
+        <Row
+          icon={Info}
+          iconColor={theme.primary}
+          label="How to use Relay"
+          sublabel="Quick tips for sharing, copying, editing, and organizing"
+          onPress={handleShowHowToUse}
+        />
+      </Section>
 
       <Section title="Preferences">
         <Row

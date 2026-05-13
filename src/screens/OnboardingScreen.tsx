@@ -33,7 +33,7 @@ export const OnboardingScreen: React.FC = () => {
         <View style={styles.guideList}>
           <Text style={[styles.guideLine, { color: theme.text }]}>Tap any message card to open the native share sheet.</Text>
           <Text style={[styles.guideLine, { color: theme.text }]}>Use the clipboard icon when you only need a silent copy.</Text>
-          <Text style={[styles.guideLine, { color: theme.text }]}>Pin favorites for the messages you send every day.</Text>
+          <Text style={[styles.guideLine, { color: theme.text }]}>Long-press a message card when you want to edit it.</Text>
         </View>
       ),
     },

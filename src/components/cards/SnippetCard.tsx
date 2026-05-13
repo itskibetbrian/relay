@@ -44,6 +44,41 @@ const getWordBoundaryPreview = (content: string) => {
   return `${(lastSpace > 0 ? clipped.slice(0, lastSpace) : clipped).trim()}...`;
 };
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const HighlightedText: React.FC<{
+  text: string;
+  query?: string;
+  style: any;
+  highlightColor: string;
+  numberOfLines?: number;
+}> = ({ text, query, style, highlightColor, numberOfLines }) => {
+  const trimmedQuery = query?.trim();
+  if (!trimmedQuery) {
+    return (
+      <Text style={style} numberOfLines={numberOfLines} ellipsizeMode="tail">
+        {text}
+      </Text>
+    );
+  }
+
+  const parts = text.split(new RegExp(`(${escapeRegExp(trimmedQuery)})`, 'ig'));
+
+  return (
+    <Text style={style} numberOfLines={numberOfLines} ellipsizeMode="tail">
+      {parts.map((part, index) =>
+        part.toLowerCase() === trimmedQuery.toLowerCase() ? (
+          <Text key={`${part}-${index}`} style={{ backgroundColor: highlightColor }}>
+            {part}
+          </Text>
+        ) : (
+          <Text key={`${part}-${index}`}>{part}</Text>
+        )
+      )}
+    </Text>
+  );
+};
+
 interface SnippetCardProps {
   snippet: Snippet;
   isCopied: boolean;
@@ -52,6 +87,7 @@ interface SnippetCardProps {
   onFavorite: (id: string) => void;
   onEdit: (snippet: Snippet) => void;
   onDelete: (id: string) => void;
+  searchQuery?: string;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -64,6 +100,7 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
   onFavorite,
   onEdit,
   onDelete,
+  searchQuery,
 }) => {
   const { theme, mode } = useTheme();
   const scale = useSharedValue(1);
@@ -157,35 +194,36 @@ export const SnippetCard: React.FC<SnippetCardProps> = ({
                   { backgroundColor: snippet.categoryColor ?? theme.primary },
                 ]}
               />
-              <Text
+              <HighlightedText
+                text={snippet.categoryName}
+                query={searchQuery}
                 style={[
                   styles.categoryText,
                   { color: theme.primary },
                 ]}
+                highlightColor={theme.primarySoft}
                 numberOfLines={1}
-              >
-                {snippet.categoryName}
-              </Text>
+              />
             </View>
           )}
 
           {/* Title */}
-          <Text
+          <HighlightedText
+            text={snippet.title}
+            query={searchQuery}
             style={[styles.title, { color: theme.text }]}
+            highlightColor={theme.primarySoft}
             numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {snippet.title}
-          </Text>
+          />
 
           {/* Content preview */}
-          <Text
+          <HighlightedText
+            text={previewContent}
+            query={searchQuery}
             style={[styles.content, { color: theme.textSecondary }]}
+            highlightColor={theme.primarySoft}
             numberOfLines={2}
-            ellipsizeMode="tail"
-          >
-            {previewContent}
-          </Text>
+          />
         </View>
 
         {/* Footer row */}
